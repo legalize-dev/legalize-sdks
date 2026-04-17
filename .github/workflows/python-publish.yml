@@ -1,0 +1,39 @@
+name: python-publish
+
+on:
+  push:
+    tags: ["python-v*"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/legalize
+    permissions:
+      id-token: write  # PyPI trusted publishing
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify tag matches pyproject version
+        run: |
+          VERSION=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          TAG=${GITHUB_REF_NAME#python-v}
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "Tag $TAG does not match pyproject version $VERSION"
+            exit 1
+          fi
+      - name: Build
+        run: |
+          pip install build
+          python -m build
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: python/dist/

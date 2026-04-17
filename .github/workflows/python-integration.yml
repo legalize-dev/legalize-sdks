@@ -1,0 +1,31 @@
+name: python-integration
+
+on:
+  schedule:
+    - cron: "0 5 * * *"  # daily at 05:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: python-integration
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    if: github.repository == 'legalize-dev/legalize-sdks'
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Run integration tests against prod
+        env:
+          LEGALIZE_API_KEY: ${{ secrets.LEGALIZE_API_KEY }}
+          LEGALIZE_BASE_URL: https://legalize.dev
+        run: pytest tests/integration -v --tb=short

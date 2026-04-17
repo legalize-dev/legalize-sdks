@@ -1,0 +1,2135 @@
+{
+  "components": {
+    "schemas": {
+      "Commit": {
+        "properties": {
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "sha": {
+            "title": "Sha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha",
+          "date",
+          "message"
+        ],
+        "title": "Commit",
+        "type": "object"
+      },
+      "CommitsResponse": {
+        "properties": {
+          "commits": {
+            "items": {
+              "$ref": "#/components/schemas/Commit"
+            },
+            "title": "Commits",
+            "type": "array"
+          },
+          "law_id": {
+            "title": "Law Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "law_id",
+          "commits"
+        ],
+        "title": "CommitsResponse",
+        "type": "object"
+      },
+      "CountryInfo": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          }
+        },
+        "required": [
+          "country",
+          "count"
+        ],
+        "title": "CountryInfo",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JurisdictionInfo": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "JurisdictionInfo",
+        "type": "object"
+      },
+      "LawAtCommitResponse": {
+        "properties": {
+          "content_md": {
+            "title": "Content Md",
+            "type": "string"
+          },
+          "law_id": {
+            "title": "Law Id",
+            "type": "string"
+          },
+          "sha": {
+            "title": "Sha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "law_id",
+          "sha",
+          "content_md"
+        ],
+        "title": "LawAtCommitResponse",
+        "type": "object"
+      },
+      "LawDetail": {
+        "description": "Full law with Markdown content (fetched from GitHub).",
+        "properties": {
+          "article_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article Count"
+          },
+          "content_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Md"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "extra": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra"
+          },
+          "frontmatter": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frontmatter"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "law_type": {
+            "title": "Law Type",
+            "type": "string"
+          },
+          "publication_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Date"
+          },
+          "short_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Title"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "country",
+          "law_type"
+        ],
+        "title": "LawDetail",
+        "type": "object"
+      },
+      "LawMeta": {
+        "description": "Law metadata without content. Lightweight \u2014 no GitHub fetch.",
+        "properties": {
+          "article_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article Count"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "extra": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          },
+          "law_type": {
+            "title": "Law Type",
+            "type": "string"
+          },
+          "publication_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Date"
+          },
+          "short_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Title"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "country",
+          "law_type"
+        ],
+        "title": "LawMeta",
+        "type": "object"
+      },
+      "LawSearchResult": {
+        "description": "Law result with search snippet.",
+        "properties": {
+          "article_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Article Count"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "law_type": {
+            "title": "Law Type",
+            "type": "string"
+          },
+          "publication_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Date"
+          },
+          "short_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Title"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "title_snippet": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Snippet"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "country",
+          "law_type"
+        ],
+        "title": "LawSearchResult",
+        "type": "object"
+      },
+      "PaginatedLaws": {
+        "description": "Unified response for law listing and search.\n\nWhen searching (query is not None), both ``total`` and ``count``\nare populated with the same value for backward compatibility.\nWhen listing, ``query`` and ``count`` are None.",
+        "properties": {
+          "count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "from_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Date"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "per_page": {
+            "title": "Per Page",
+            "type": "integer"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/LawSearchResult"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "sort": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sort"
+          },
+          "to_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Date"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "country",
+          "total",
+          "page",
+          "per_page",
+          "results"
+        ],
+        "title": "PaginatedLaws",
+        "type": "object"
+      },
+      "Reform": {
+        "properties": {
+          "articles_affected": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Articles Affected"
+          },
+          "date": {
+            "title": "Date",
+            "type": "string"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          }
+        },
+        "required": [
+          "date"
+        ],
+        "title": "Reform",
+        "type": "object"
+      },
+      "ReformsResponse": {
+        "properties": {
+          "law_id": {
+            "title": "Law Id",
+            "type": "string"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "reforms": {
+            "items": {
+              "$ref": "#/components/schemas/Reform"
+            },
+            "title": "Reforms",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "law_id",
+          "total",
+          "offset",
+          "limit",
+          "reforms"
+        ],
+        "title": "ReformsResponse",
+        "type": "object"
+      },
+      "StatsResponse": {
+        "properties": {
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "jurisdiction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jurisdiction"
+          },
+          "law_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Law Types",
+            "type": "array"
+          },
+          "most_reformed_laws": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Most Reformed Laws",
+            "type": "array"
+          },
+          "reform_activity_by_year": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Reform Activity By Year",
+            "type": "array"
+          }
+        },
+        "required": [
+          "country",
+          "reform_activity_by_year",
+          "most_reformed_laws",
+          "law_types"
+        ],
+        "title": "StatsResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "WebhookEndpointCreate": {
+        "properties": {
+          "countries": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Countries"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "event_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Event Types",
+            "type": "array"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "event_types"
+        ],
+        "title": "WebhookEndpointCreate",
+        "type": "object"
+      },
+      "WebhookEndpointUpdate": {
+        "properties": {
+          "countries": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Countries"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "event_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Types"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "title": "WebhookEndpointUpdate",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "description": "Bearer token. Get one for free at https://legalize.dev/api \u2014 no credit card, 5,000 calls/month forever for early signups. Format: `Bearer leg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`",
+        "in": "header",
+        "name": "Authorization",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "Open legislation API. Every law as structured data, every reform as a diff.",
+    "title": "Legalize API",
+    "version": "0.10.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/health": {
+      "get": {
+        "description": "Health check for monitoring. No authentication required.",
+        "operationId": "health_check_api_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/api/v1/countries": {
+      "get": {
+        "description": "List all available countries with law counts.",
+        "operationId": "api_countries_api_v1_countries_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CountryInfo"
+                  },
+                  "title": "Response Api Countries Api V1 Countries Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Countries",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/webhooks": {
+      "get": {
+        "description": "List all webhook endpoints for the authenticated user.",
+        "operationId": "list_endpoints_api_v1_webhooks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "List Endpoints",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "post": {
+        "description": "Create a webhook endpoint. Returns the signing secret ONCE.",
+        "operationId": "create_endpoint_api_v1_webhooks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEndpointCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Create Endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhooks/{endpoint_id}": {
+      "delete": {
+        "description": "Delete a webhook endpoint.",
+        "operationId": "delete_endpoint_api_v1_webhooks__endpoint_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Delete Endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "get": {
+        "description": "Get details for a specific webhook endpoint.",
+        "operationId": "get_endpoint_api_v1_webhooks__endpoint_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Get Endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      },
+      "patch": {
+        "description": "Update a webhook endpoint.",
+        "operationId": "update_endpoint_api_v1_webhooks__endpoint_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookEndpointUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Update Endpoint",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhooks/{endpoint_id}/deliveries": {
+      "get": {
+        "description": "List delivery attempts for an endpoint. Filter by status: failed, success, pending.",
+        "operationId": "list_deliveries_api_v1_webhooks__endpoint_id__deliveries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "List Deliveries",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhooks/{endpoint_id}/deliveries/{delivery_id}/retry": {
+      "post": {
+        "description": "Retry a failed webhook delivery. Re-sends the original event payload.",
+        "operationId": "retry_failed_delivery_api_v1_webhooks__endpoint_id__deliveries__delivery_id__retry_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "delivery_id",
+            "required": true,
+            "schema": {
+              "title": "Delivery Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Retry Failed Delivery",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/webhooks/{endpoint_id}/test": {
+      "post": {
+        "description": "Send a test.ping event to verify the endpoint is working.",
+        "operationId": "send_test_event_api_v1_webhooks__endpoint_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpoint_id",
+            "required": true,
+            "schema": {
+              "title": "Endpoint Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Send Test Event",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/api/v1/{country}/jurisdictions": {
+      "get": {
+        "description": "List jurisdictions (regions/states) within a country.",
+        "operationId": "api_jurisdictions_api_v1__country__jurisdictions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/JurisdictionInfo"
+                  },
+                  "title": "Response Api Jurisdictions Api V1  Country  Jurisdictions Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Jurisdictions",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/law-types": {
+      "get": {
+        "description": "List law types available in a country (e.g. constitucion, ley, real_decreto).",
+        "operationId": "api_law_types_api_v1__country__law_types_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "Response Api Law Types Api V1  Country  Law Types Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Law Types",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws": {
+      "get": {
+        "description": "Search and list laws for a country.\n\nWithout `q`: returns a paginated list of all laws, sorted by date (newest first).\nWith `q`: full-text search with relevance ranking.\n\nAll filters (law_type, year, status, jurisdiction, from_date, to_date) apply\nin both listing and search modes. Use `sort` to change order.",
+        "operationId": "api_list_laws_api_v1__country__laws_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Per Page",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by law type. Comma-separated for multiple: ley,constitucion",
+            "in": "query",
+            "name": "law_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by law type. Comma-separated for multiple: ley,constitucion",
+              "title": "Law Type"
+            }
+          },
+          {
+            "description": "Filter by publication year (4 digits)",
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by publication year (4 digits)",
+              "title": "Year"
+            }
+          },
+          {
+            "description": "Filter by status: vigente, derogada",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status: vigente, derogada",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Filter by jurisdiction code",
+            "in": "query",
+            "name": "jurisdiction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by jurisdiction code",
+              "title": "Jurisdiction"
+            }
+          },
+          {
+            "description": "Full-text search query",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Full-text search query",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Sort order: date_desc (default), date_asc, title",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Sort order: date_desc (default), date_asc, title",
+              "title": "Sort"
+            }
+          },
+          {
+            "description": "Filter from date (YYYY-MM-DD inclusive)",
+            "in": "query",
+            "name": "from_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter from date (YYYY-MM-DD inclusive)",
+              "title": "From Date"
+            }
+          },
+          {
+            "description": "Filter to date (YYYY-MM-DD inclusive)",
+            "in": "query",
+            "name": "to_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to date (YYYY-MM-DD inclusive)",
+              "title": "To Date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedLaws"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api List Laws",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws/{law_id}": {
+      "get": {
+        "description": "Get a complete law with full Markdown content.\n\nFetches content from GitHub. Slower than /meta for metadata-only use cases.\nFree tier: basic fields + content_md.\nPro tier: adds department, source, last_updated, extra (country-specific metadata).",
+        "operationId": "api_get_law_api_v1__country__laws__law_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "law_id",
+            "required": true,
+            "schema": {
+              "title": "Law Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Get Law",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws/{law_id}/at/{sha}": {
+      "get": {
+        "description": "Time-travel: get the full text of a law at a specific historical version.",
+        "operationId": "api_law_at_commit_api_v1__country__laws__law_id__at__sha__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "law_id",
+            "required": true,
+            "schema": {
+              "title": "Law Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sha",
+            "required": true,
+            "schema": {
+              "title": "Sha",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawAtCommitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Law At Commit",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws/{law_id}/commits": {
+      "get": {
+        "description": "Get the git commit history of a law. Each commit represents a version change.",
+        "operationId": "api_get_commits_api_v1__country__laws__law_id__commits_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "law_id",
+            "required": true,
+            "schema": {
+              "title": "Law Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommitsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Get Commits",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws/{law_id}/meta": {
+      "get": {
+        "description": "Get law metadata only. Fast \u2014 no content fetching from GitHub.\n\nFree tier: basic fields (id, title, status, dates, country, law_type).\nPro tier: adds department, source, last_updated, extra (country-specific metadata).",
+        "operationId": "api_get_law_meta_api_v1__country__laws__law_id__meta_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "law_id",
+            "required": true,
+            "schema": {
+              "title": "Law Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawMeta"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Get Law Meta",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/laws/{law_id}/reforms": {
+      "get": {
+        "description": "Get the reform history of a law. Each reform is a legislative change.",
+        "operationId": "api_get_reforms_api_v1__country__laws__law_id__reforms_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "law_id",
+            "required": true,
+            "schema": {
+              "title": "Law Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 1000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReformsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Get Reforms",
+        "tags": [
+          "api"
+        ]
+      }
+    },
+    "/api/v1/{country}/stats": {
+      "get": {
+        "description": "Get aggregate statistics: reform activity by year, most reformed laws, and law types.",
+        "operationId": "api_stats_api_v1__country__stats_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "country",
+            "required": true,
+            "schema": {
+              "title": "Country",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "jurisdiction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Jurisdiction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing, malformed, or invalid API key"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Monthly quota exceeded. Includes Retry-After header."
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "summary": "Api Stats",
+        "tags": [
+          "api"
+        ]
+      }
+    }
+  }
+}
