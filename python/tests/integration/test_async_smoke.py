@@ -30,9 +30,7 @@ async def test_parallel_fan_out(aclient: AsyncLegalize):
     stats_task = aclient.stats.retrieve("es")
     law_types_task = aclient.law_types.list("es")
 
-    countries, stats, law_types = await asyncio.gather(
-        countries_task, stats_task, law_types_task
-    )
+    countries, stats, law_types = await asyncio.gather(countries_task, stats_task, law_types_task)
 
     assert len(countries) > 0
     assert stats.country == "es"

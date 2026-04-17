@@ -158,9 +158,7 @@ class Webhook:
         if not candidate_hexes:
             raise WebhookVerificationError("verification failed")
 
-        if not any(
-            hmac.compare_digest(expected_hex, candidate) for candidate in candidate_hexes
-        ):
+        if not any(hmac.compare_digest(expected_hex, candidate) for candidate in candidate_hexes):
             raise WebhookVerificationError("verification failed")
 
         # ---- parse payload ----------------------------------------------

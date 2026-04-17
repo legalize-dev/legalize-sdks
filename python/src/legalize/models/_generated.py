@@ -9,30 +9,30 @@ from pydantic import BaseModel, Field
 
 
 class Commit(BaseModel):
-    date: str = Field(..., title='Date')
-    message: str = Field(..., title='Message')
-    sha: str = Field(..., title='Sha')
+    date: str = Field(..., title="Date")
+    message: str = Field(..., title="Message")
+    sha: str = Field(..., title="Sha")
 
 
 class CommitsResponse(BaseModel):
-    commits: list[Commit] = Field(..., title='Commits')
-    law_id: str = Field(..., title='Law Id')
+    commits: list[Commit] = Field(..., title="Commits")
+    law_id: str = Field(..., title="Law Id")
 
 
 class CountryInfo(BaseModel):
-    count: int = Field(..., title='Count')
-    country: str = Field(..., title='Country')
+    count: int = Field(..., title="Count")
+    country: str = Field(..., title="Country")
 
 
 class JurisdictionInfo(BaseModel):
-    count: int = Field(..., title='Count')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
+    count: int = Field(..., title="Count")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
 
 
 class LawAtCommitResponse(BaseModel):
-    content_md: str = Field(..., title='Content Md')
-    law_id: str = Field(..., title='Law Id')
-    sha: str = Field(..., title='Sha')
+    content_md: str = Field(..., title="Content Md")
+    law_id: str = Field(..., title="Law Id")
+    sha: str = Field(..., title="Sha")
 
 
 class LawDetail(BaseModel):
@@ -40,21 +40,21 @@ class LawDetail(BaseModel):
     Full law with Markdown content (fetched from GitHub).
     """
 
-    article_count: int | None = Field(None, title='Article Count')
-    content_md: str | None = Field(None, title='Content Md')
-    country: str = Field(..., title='Country')
-    department: str | None = Field(None, title='Department')
-    extra: dict[str, Any] | None = Field(None, title='Extra')
-    frontmatter: dict[str, Any] | None = Field(None, title='Frontmatter')
-    id: str = Field(..., title='Id')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
-    last_updated: str | None = Field(None, title='Last Updated')
-    law_type: str = Field(..., title='Law Type')
-    publication_date: str | None = Field(None, title='Publication Date')
-    short_title: str | None = Field(None, title='Short Title')
-    source: str | None = Field(None, title='Source')
-    status: str | None = Field(None, title='Status')
-    title: str = Field(..., title='Title')
+    article_count: int | None = Field(None, title="Article Count")
+    content_md: str | None = Field(None, title="Content Md")
+    country: str = Field(..., title="Country")
+    department: str | None = Field(None, title="Department")
+    extra: dict[str, Any] | None = Field(None, title="Extra")
+    frontmatter: dict[str, Any] | None = Field(None, title="Frontmatter")
+    id: str = Field(..., title="Id")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
+    last_updated: str | None = Field(None, title="Last Updated")
+    law_type: str = Field(..., title="Law Type")
+    publication_date: str | None = Field(None, title="Publication Date")
+    short_title: str | None = Field(None, title="Short Title")
+    source: str | None = Field(None, title="Source")
+    status: str | None = Field(None, title="Status")
+    title: str = Field(..., title="Title")
 
 
 class LawMeta(BaseModel):
@@ -62,19 +62,19 @@ class LawMeta(BaseModel):
     Law metadata without content. Lightweight — no GitHub fetch.
     """
 
-    article_count: int | None = Field(None, title='Article Count')
-    country: str = Field(..., title='Country')
-    department: str | None = Field(None, title='Department')
-    extra: dict[str, Any] | None = Field(None, title='Extra')
-    id: str = Field(..., title='Id')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
-    last_updated: str | None = Field(None, title='Last Updated')
-    law_type: str = Field(..., title='Law Type')
-    publication_date: str | None = Field(None, title='Publication Date')
-    short_title: str | None = Field(None, title='Short Title')
-    source: str | None = Field(None, title='Source')
-    status: str | None = Field(None, title='Status')
-    title: str = Field(..., title='Title')
+    article_count: int | None = Field(None, title="Article Count")
+    country: str = Field(..., title="Country")
+    department: str | None = Field(None, title="Department")
+    extra: dict[str, Any] | None = Field(None, title="Extra")
+    id: str = Field(..., title="Id")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
+    last_updated: str | None = Field(None, title="Last Updated")
+    law_type: str = Field(..., title="Law Type")
+    publication_date: str | None = Field(None, title="Publication Date")
+    short_title: str | None = Field(None, title="Short Title")
+    source: str | None = Field(None, title="Source")
+    status: str | None = Field(None, title="Status")
+    title: str = Field(..., title="Title")
 
 
 class LawSearchResult(BaseModel):
@@ -82,16 +82,16 @@ class LawSearchResult(BaseModel):
     Law result with search snippet.
     """
 
-    article_count: int | None = Field(None, title='Article Count')
-    country: str = Field(..., title='Country')
-    id: str = Field(..., title='Id')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
-    law_type: str = Field(..., title='Law Type')
-    publication_date: str | None = Field(None, title='Publication Date')
-    short_title: str | None = Field(None, title='Short Title')
-    status: str | None = Field(None, title='Status')
-    title: str = Field(..., title='Title')
-    title_snippet: str | None = Field(None, title='Title Snippet')
+    article_count: int | None = Field(None, title="Article Count")
+    country: str = Field(..., title="Country")
+    id: str = Field(..., title="Id")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
+    law_type: str = Field(..., title="Law Type")
+    publication_date: str | None = Field(None, title="Publication Date")
+    short_title: str | None = Field(None, title="Short Title")
+    status: str | None = Field(None, title="Status")
+    title: str = Field(..., title="Title")
+    title_snippet: str | None = Field(None, title="Title Snippet")
 
 
 class PaginatedLaws(BaseModel):
@@ -103,65 +103,63 @@ class PaginatedLaws(BaseModel):
     When listing, ``query`` and ``count`` are None.
     """
 
-    count: int | None = Field(None, title='Count')
-    country: str = Field(..., title='Country')
-    from_date: str | None = Field(None, title='From Date')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
-    page: int = Field(..., title='Page')
-    per_page: int = Field(..., title='Per Page')
-    query: str | None = Field(None, title='Query')
-    results: list[LawSearchResult] = Field(..., title='Results')
-    sort: str | None = Field(None, title='Sort')
-    to_date: str | None = Field(None, title='To Date')
-    total: int = Field(..., title='Total')
+    count: int | None = Field(None, title="Count")
+    country: str = Field(..., title="Country")
+    from_date: str | None = Field(None, title="From Date")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
+    page: int = Field(..., title="Page")
+    per_page: int = Field(..., title="Per Page")
+    query: str | None = Field(None, title="Query")
+    results: list[LawSearchResult] = Field(..., title="Results")
+    sort: str | None = Field(None, title="Sort")
+    to_date: str | None = Field(None, title="To Date")
+    total: int = Field(..., title="Total")
 
 
 class Reform(BaseModel):
-    articles_affected: str | None = Field(None, title='Articles Affected')
-    date: str = Field(..., title='Date')
-    source_id: str | None = Field(None, title='Source Id')
+    articles_affected: str | None = Field(None, title="Articles Affected")
+    date: str = Field(..., title="Date")
+    source_id: str | None = Field(None, title="Source Id")
 
 
 class ReformsResponse(BaseModel):
-    law_id: str = Field(..., title='Law Id')
-    limit: int = Field(..., title='Limit')
-    offset: int = Field(..., title='Offset')
-    reforms: list[Reform] = Field(..., title='Reforms')
-    total: int = Field(..., title='Total')
+    law_id: str = Field(..., title="Law Id")
+    limit: int = Field(..., title="Limit")
+    offset: int = Field(..., title="Offset")
+    reforms: list[Reform] = Field(..., title="Reforms")
+    total: int = Field(..., title="Total")
 
 
 class StatsResponse(BaseModel):
-    country: str = Field(..., title='Country')
-    jurisdiction: str | None = Field(None, title='Jurisdiction')
-    law_types: list[str] = Field(..., title='Law Types')
-    most_reformed_laws: list[dict[str, Any]] = Field(..., title='Most Reformed Laws')
-    reform_activity_by_year: list[dict[str, Any]] = Field(
-        ..., title='Reform Activity By Year'
-    )
+    country: str = Field(..., title="Country")
+    jurisdiction: str | None = Field(None, title="Jurisdiction")
+    law_types: list[str] = Field(..., title="Law Types")
+    most_reformed_laws: list[dict[str, Any]] = Field(..., title="Most Reformed Laws")
+    reform_activity_by_year: list[dict[str, Any]] = Field(..., title="Reform Activity By Year")
 
 
 class ValidationError(BaseModel):
-    ctx: dict[str, Any] | None = Field(None, title='Context')
-    input: Any | None = Field(None, title='Input')
-    loc: list[str | int] = Field(..., title='Location')
-    msg: str = Field(..., title='Message')
-    type: str = Field(..., title='Error Type')
+    ctx: dict[str, Any] | None = Field(None, title="Context")
+    input: Any | None = Field(None, title="Input")
+    loc: list[str | int] = Field(..., title="Location")
+    msg: str = Field(..., title="Message")
+    type: str = Field(..., title="Error Type")
 
 
 class WebhookEndpointCreate(BaseModel):
-    countries: list[str] | None = Field(None, title='Countries')
-    description: str = Field('', title='Description')
-    event_types: list[str] = Field(..., title='Event Types')
-    url: str = Field(..., title='Url')
+    countries: list[str] | None = Field(None, title="Countries")
+    description: str = Field("", title="Description")
+    event_types: list[str] = Field(..., title="Event Types")
+    url: str = Field(..., title="Url")
 
 
 class WebhookEndpointUpdate(BaseModel):
-    countries: list[str] | None = Field(None, title='Countries')
-    description: str | None = Field(None, title='Description')
-    enabled: bool | None = Field(None, title='Enabled')
-    event_types: list[str] | None = Field(None, title='Event Types')
-    url: str | None = Field(None, title='Url')
+    countries: list[str] | None = Field(None, title="Countries")
+    description: str | None = Field(None, title="Description")
+    enabled: bool | None = Field(None, title="Enabled")
+    event_types: list[str] | None = Field(None, title="Event Types")
+    url: str | None = Field(None, title="Url")
 
 
 class HTTPValidationError(BaseModel):
-    detail: list[ValidationError] | None = Field(None, title='Detail')
+    detail: list[ValidationError] | None = Field(None, title="Detail")

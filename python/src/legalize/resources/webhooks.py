@@ -93,9 +93,7 @@ class Webhooks(_SyncResource):
         params: _Dict = {"page": page, "status": status}
         return cast(
             _Dict,
-            self._client.request(
-                "GET", f"{API}/webhooks/{endpoint_id}/deliveries", params=params
-            ),
+            self._client.request("GET", f"{API}/webhooks/{endpoint_id}/deliveries", params=params),
         )
 
     def retry(self, endpoint_id: int, delivery_id: int) -> _Dict:
@@ -128,18 +126,14 @@ class AsyncWebhooks(_AsyncResource):
             "countries": countries,
             "description": description,
         }
-        return cast(
-            _Dict, await self._client.request("POST", f"{API}/webhooks", json=body)
-        )
+        return cast(_Dict, await self._client.request("POST", f"{API}/webhooks", json=body))
 
     async def list(self) -> _DictList:
         data = await self._client.request("GET", f"{API}/webhooks")
         return list(data)
 
     async def retrieve(self, endpoint_id: int) -> _Dict:
-        return cast(
-            _Dict, await self._client.request("GET", f"{API}/webhooks/{endpoint_id}")
-        )
+        return cast(_Dict, await self._client.request("GET", f"{API}/webhooks/{endpoint_id}"))
 
     async def update(
         self,
@@ -168,9 +162,7 @@ class AsyncWebhooks(_AsyncResource):
         )
 
     async def delete(self, endpoint_id: int) -> _Dict:
-        return cast(
-            _Dict, await self._client.request("DELETE", f"{API}/webhooks/{endpoint_id}")
-        )
+        return cast(_Dict, await self._client.request("DELETE", f"{API}/webhooks/{endpoint_id}"))
 
     async def deliveries(
         self,
@@ -199,9 +191,7 @@ class AsyncWebhooks(_AsyncResource):
         )
 
     async def test(self, endpoint_id: int) -> _Dict:
-        return cast(
-            _Dict, await self._client.request("POST", f"{API}/webhooks/{endpoint_id}/test")
-        )
+        return cast(_Dict, await self._client.request("POST", f"{API}/webhooks/{endpoint_id}/test"))
 
 
 __all__ = ["AsyncWebhooks", "Webhooks"]

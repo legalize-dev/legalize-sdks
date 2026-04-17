@@ -42,7 +42,9 @@ def capture(handler_slot, status=200, body=None):
 
 class TestCountries:
     def test_list(self, client, handler):
-        received = capture(handler, body=[{"country": "es", "count": 100}, {"country": "fr", "count": 50}])
+        received = capture(
+            handler, body=[{"country": "es", "count": 100}, {"country": "fr", "count": 50}]
+        )
         out = client.countries.list()
         assert received["request"].method == "GET"
         assert received["request"].url.path == "/api/v1/countries"
@@ -150,10 +152,20 @@ class TestLaws:
     def test_iter_paginates(self, client, handler):
         # Return 2 pages of 2 items each, total=4.
         pages = [
-            {"country": "es", "total": 4, "page": 1, "per_page": 2,
-             "results": [{**LAW_META, "id": "a"}, {**LAW_META, "id": "b"}]},
-            {"country": "es", "total": 4, "page": 2, "per_page": 2,
-             "results": [{**LAW_META, "id": "c"}, {**LAW_META, "id": "d"}]},
+            {
+                "country": "es",
+                "total": 4,
+                "page": 1,
+                "per_page": 2,
+                "results": [{**LAW_META, "id": "a"}, {**LAW_META, "id": "b"}],
+            },
+            {
+                "country": "es",
+                "total": 4,
+                "page": 2,
+                "per_page": 2,
+                "results": [{**LAW_META, "id": "c"}, {**LAW_META, "id": "d"}],
+            },
         ]
         call_idx = [0]
 
@@ -227,11 +239,23 @@ class TestReforms:
 
     def test_iter(self, client, handler):
         pages = [
-            {"law_id": "x", "total": 3, "offset": 0, "limit": 2,
-             "reforms": [{"date": "2024-01-01", "source_id": "a"},
-                         {"date": "2024-01-02", "source_id": "b"}]},
-            {"law_id": "x", "total": 3, "offset": 2, "limit": 2,
-             "reforms": [{"date": "2024-01-03", "source_id": "c"}]},
+            {
+                "law_id": "x",
+                "total": 3,
+                "offset": 0,
+                "limit": 2,
+                "reforms": [
+                    {"date": "2024-01-01", "source_id": "a"},
+                    {"date": "2024-01-02", "source_id": "b"},
+                ],
+            },
+            {
+                "law_id": "x",
+                "total": 3,
+                "offset": 2,
+                "limit": 2,
+                "reforms": [{"date": "2024-01-03", "source_id": "c"}],
+            },
         ]
         idx = [0]
 
@@ -306,6 +330,7 @@ class TestWebhooksResource:
         assert req.method == "POST"
         assert req.url.path == "/api/v1/webhooks"
         import json as jsonlib
+
         body = jsonlib.loads(req.content)
         assert body["url"] == "https://example.test/hook"
         assert body["event_types"] == ["law.updated"]
@@ -326,6 +351,7 @@ class TestWebhooksResource:
         req = received["request"]
         assert req.method == "PATCH"
         import json as jsonlib
+
         body = jsonlib.loads(req.content)
         assert body == {"description": "paused", "enabled": False}
 

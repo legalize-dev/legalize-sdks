@@ -92,8 +92,12 @@ async def test_laws_search_works(aclient, handler):
     capture(
         handler,
         body={
-            "country": "es", "total": 1, "page": 1, "per_page": 50,
-            "results": [dict(LAW_META)], "query": "priv",
+            "country": "es",
+            "total": 1,
+            "page": 1,
+            "per_page": 50,
+            "results": [dict(LAW_META)],
+            "query": "priv",
         },
     )
     out = await aclient.laws.search("es", q="priv")
@@ -102,10 +106,20 @@ async def test_laws_search_works(aclient, handler):
 
 async def test_laws_iter(aclient, handler):
     pages = [
-        {"country": "es", "total": 3, "page": 1, "per_page": 2,
-         "results": [{**LAW_META, "id": "a"}, {**LAW_META, "id": "b"}]},
-        {"country": "es", "total": 3, "page": 2, "per_page": 2,
-         "results": [{**LAW_META, "id": "c"}]},
+        {
+            "country": "es",
+            "total": 3,
+            "page": 1,
+            "per_page": 2,
+            "results": [{**LAW_META, "id": "a"}, {**LAW_META, "id": "b"}],
+        },
+        {
+            "country": "es",
+            "total": 3,
+            "page": 2,
+            "per_page": 2,
+            "results": [{**LAW_META, "id": "c"}],
+        },
     ]
     idx = [0]
 
@@ -150,7 +164,10 @@ async def test_reforms_list(aclient, handler):
     received = capture(
         handler,
         body={
-            "law_id": "x", "total": 1, "offset": 0, "limit": 100,
+            "law_id": "x",
+            "total": 1,
+            "offset": 0,
+            "limit": 100,
             "reforms": [{"date": "2024-01-01", "source_id": "s"}],
         },
     )
@@ -162,10 +179,20 @@ async def test_reforms_list(aclient, handler):
 
 async def test_reforms_iter(aclient, handler):
     pages = [
-        {"law_id": "x", "total": 3, "offset": 0, "limit": 2,
-         "reforms": [{"date": "1", "source_id": "a"}, {"date": "2", "source_id": "b"}]},
-        {"law_id": "x", "total": 3, "offset": 2, "limit": 2,
-         "reforms": [{"date": "3", "source_id": "c"}]},
+        {
+            "law_id": "x",
+            "total": 3,
+            "offset": 0,
+            "limit": 2,
+            "reforms": [{"date": "1", "source_id": "a"}, {"date": "2", "source_id": "b"}],
+        },
+        {
+            "law_id": "x",
+            "total": 3,
+            "offset": 2,
+            "limit": 2,
+            "reforms": [{"date": "3", "source_id": "c"}],
+        },
     ]
     idx = [0]
 
@@ -183,8 +210,11 @@ async def test_stats(aclient, handler):
     received = capture(
         handler,
         body={
-            "country": "es", "jurisdiction": None,
-            "reform_activity_by_year": [], "most_reformed_laws": [], "law_types": [],
+            "country": "es",
+            "jurisdiction": None,
+            "reform_activity_by_year": [],
+            "most_reformed_laws": [],
+            "law_types": [],
         },
     )
     out = await aclient.stats.retrieve("es", jurisdiction="cat")

@@ -69,7 +69,9 @@ def test_offset_iterator_returns_exactly_total(total, batch):
 
 
 @given(
-    items=st.lists(st.integers(min_value=0, max_value=10_000), min_size=0, max_size=100, unique=True),
+    items=st.lists(
+        st.integers(min_value=0, max_value=10_000), min_size=0, max_size=100, unique=True
+    ),
     per_page=st.integers(min_value=1, max_value=20),
 )
 @settings(max_examples=100, deadline=None)

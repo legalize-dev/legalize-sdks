@@ -76,7 +76,7 @@ class RetryPolicy:
         if retry_after is not None and retry_after >= 0:
             return min(float(retry_after), self.max_delay)
 
-        base = self.initial_delay * (self.backoff_factor ** attempt)
+        base = self.initial_delay * (self.backoff_factor**attempt)
         return random.uniform(0, min(base, self.max_delay))  # noqa: S311 — jitter, not crypto
 
 

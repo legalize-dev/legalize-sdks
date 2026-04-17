@@ -43,9 +43,7 @@ class TestVerifyHappy:
         ts = str(NOW)
         sig = _sign(SECRET, p, ts)
 
-        event = Webhook.verify(
-            payload=p, sig_header=sig, timestamp=ts, secret=SECRET, now=NOW
-        )
+        event = Webhook.verify(payload=p, sig_header=sig, timestamp=ts, secret=SECRET, now=NOW)
 
         assert isinstance(event, WebhookEvent)
         assert event.id == "evt_1"
@@ -70,14 +68,14 @@ class TestVerifyHappy:
         # SDK should ignore unknown schemes and accept v1.
         header = f"v0=abcdef, {v1}"
 
-        event = Webhook.verify(
-            payload=p, sig_header=header, timestamp=ts, secret=SECRET, now=NOW
-        )
+        event = Webhook.verify(payload=p, sig_header=header, timestamp=ts, secret=SECRET, now=NOW)
         assert event.id == "evt_1"
 
     def test_event_type_alias(self):
         # Server sends "event_type"; SDK exposes as .type
-        p = json.dumps({"id": "x", "event_type": "test.ping", "created_at": "t", "data": {}}).encode()
+        p = json.dumps(
+            {"id": "x", "event_type": "test.ping", "created_at": "t", "data": {}}
+        ).encode()
         ts = str(NOW)
         sig = _sign(SECRET, p, ts)
         event = Webhook.verify(payload=p, sig_header=sig, timestamp=ts, secret=SECRET, now=NOW)

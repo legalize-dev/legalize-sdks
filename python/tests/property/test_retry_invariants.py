@@ -56,7 +56,9 @@ def _build_client(
         max_size=8,
     ),
 )
-@settings(max_examples=60, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=60, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 def test_call_count_bounded(max_retries, statuses):
     policy = RetryPolicy(max_retries=max_retries, initial_delay=0, max_delay=0)
     seq = [(s, None) for s in statuses]
@@ -76,7 +78,9 @@ def test_call_count_bounded(max_retries, statuses):
     status=st.sampled_from(NON_RETRY_STATUSES),
     max_retries=st.integers(min_value=0, max_value=5),
 )
-@settings(max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 def test_never_retries_non_retryable(status, max_retries):
     policy = RetryPolicy(max_retries=max_retries, initial_delay=0, max_delay=0)
     seq = [(status, None)] * 10
@@ -94,7 +98,9 @@ def test_never_retries_non_retryable(status, max_retries):
     retry_after=st.integers(min_value=0, max_value=10),
     max_delay=st.integers(min_value=10, max_value=60),
 )
-@settings(max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@settings(
+    max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
+)
 def test_retry_after_exact_sleep(retry_after, max_delay):
     # Server says wait N seconds, N < max_delay → sleep exactly N.
     policy = RetryPolicy(max_retries=1, initial_delay=0, max_delay=max_delay)

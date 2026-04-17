@@ -50,8 +50,11 @@ class TestNonJSONBody:
     @pytest.mark.asyncio
     async def test_async_raises_apierror(self, aclient, handler):
         aclient  # noqa
+
         def h(_req):
-            return httpx.Response(200, content=b"<html>oops</html>", headers={"content-type": "text/html"})
+            return httpx.Response(
+                200, content=b"<html>oops</html>", headers={"content-type": "text/html"}
+            )
 
         handler[0] = h
         with pytest.raises(APIError, match="non-JSON"):
@@ -222,7 +225,9 @@ class TestLastResponse:
             c.close()
 
     def test_populated_after_request(self, client, handler):
-        handler[0] = lambda req: httpx.Response(200, json={}, headers={"x-ratelimit-remaining": "99"})
+        handler[0] = lambda req: httpx.Response(
+            200, json={}, headers={"x-ratelimit-remaining": "99"}
+        )
         client.request("GET", "/x")
         assert client.last_response is not None
         assert client.last_response.headers["x-ratelimit-remaining"] == "99"

@@ -81,13 +81,15 @@ class TestComputeDelay:
         for attempt in range(5):
             for _ in range(50):
                 delay = p.compute_delay(attempt, retry_after=None)
-                assert 0 <= delay <= min(100, 1.0 * 2.0 ** attempt)
+                assert 0 <= delay <= min(100, 1.0 * 2.0**attempt)
 
 
 # ---- end-to-end retry behavior via MockTransport ----------------------
 
 
-def _build_client(responses: list[httpx.Response], *, max_retries: int = 2) -> tuple[Legalize, list[int]]:
+def _build_client(
+    responses: list[httpx.Response], *, max_retries: int = 2
+) -> tuple[Legalize, list[int]]:
     """Build a client that returns ``responses[i]`` for call i.
 
     Returns ``(client, call_counter)`` where ``call_counter[0]`` is the

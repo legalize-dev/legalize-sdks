@@ -116,7 +116,9 @@ class TestRequestId:
 
 class TestStr:
     def test_includes_code_and_status(self):
-        err = APIError.from_response(_resp(429, {"detail": {"error": "rate_limit", "message": "nope"}}))
+        err = APIError.from_response(
+            _resp(429, {"detail": {"error": "rate_limit", "message": "nope"}})
+        )
         s = str(err)
         assert "HTTP 429" in s
         assert "rate_limit" in s
