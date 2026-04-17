@@ -19,3 +19,4 @@ venv/
 .env.local
 apikey
 .claude/
+apikeypypi

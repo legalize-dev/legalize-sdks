@@ -11,8 +11,6 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/legalize
-    permissions:
-      id-token: write  # PyPI trusted publishing
     defaults:
       run:
         working-directory: python
@@ -22,6 +20,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Verify tag matches pyproject version
+        if: github.event_name == 'push'
         run: |
           VERSION=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
           TAG=${GITHUB_REF_NAME#python-v}
@@ -33,7 +32,16 @@ jobs:
         run: |
           pip install build
           python -m build
-      - name: Publish
+      # Uses a PyPI API token for the first release. Once the project
+      # exists on PyPI, migrate to Trusted Publishing:
+      #   1. pypi.org/manage/project/legalize/settings/publishing/
+      #      → Add a new trusted publisher (GitHub Actions)
+      #      → repo: legalize-dev/legalize-sdks, workflow: python-publish.yml,
+      #        environment: pypi
+      #   2. Replace the `password:` line below with `id-token: write` at
+      #      the job level and drop the `password:` arg here.
+      - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: python/dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
