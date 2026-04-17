@@ -7,7 +7,7 @@ name = "legalize"
 version = "0.1.0"
 description = "Official Python client for the Legalize API"
 readme = "README.md"
-license = { file = "../LICENSE" }
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
 authors = [{ name = "Legalize", email = "dev@legalize.dev" }]
 keywords = ["legalize", "legal", "laws", "api", "sdk"]
@@ -52,7 +52,7 @@ Issues = "https://github.com/legalize-dev/legalize-sdks/issues"
 packages = ["src/legalize"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/legalize", "README.md", "../LICENSE"]
+include = ["src/legalize", "README.md", "LICENSE", "CHANGELOG.md"]
 
 [tool.ruff]
 line-length = 100
