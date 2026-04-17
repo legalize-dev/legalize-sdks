@@ -30,7 +30,6 @@ from legalize.models import (
     StatsResponse,
 )
 
-
 # ---- top-level lookups ------------------------------------------------
 
 
@@ -174,16 +173,19 @@ class TestLawsRetrieve:
 class TestLawHistory:
     @pytest.fixture(scope="class")
     def reformed_law(self, api_key, base_url):
-        """A law with ≥1 reform so history tests have something to verify."""
+        """A law with ≥1 reform so history tests have something to verify.
+
+        Uses ``stats.most_reformed_laws`` which is sorted by reform
+        count. Avoids hard-coding a law id that might change.
+        """
         client = Legalize(api_key=api_key, base_url=base_url)
         try:
-            # Grab a recent law that's likely to have reforms.
-            page = client.laws.list("es", per_page=20, sort="date_desc")
-            for law in page.results:
-                reforms = client.reforms.list("es", law.id, limit=1)
-                if reforms.total > 0:
-                    return law.id
-            pytest.skip("no reformed law found in first 20 — unusual")
+            stats = client.stats.retrieve("es")
+            for row in stats.most_reformed_laws:
+                count = row.get("reform_count") or row.get("count") or 0
+                if row.get("id") and count > 0:
+                    return row["id"]
+            pytest.skip("no most_reformed_laws returned — unexpected")
         finally:
             client.close()
 
@@ -250,9 +252,16 @@ class TestPaginationLive:
 
     def test_iter_across_multiple_pages(self, client: Legalize):
         # Collect 150 laws → forces at least 2 pages at per_page=100.
+        # Near-duplicates are possible if new laws are written between
+        # page fetches (offset pagination is not snapshot-isolated over
+        # a live dataset). Tolerate up to ~1% drift.
         collected = list(client.laws.iter("es", per_page=100, limit=150))
         assert len(collected) == 150
-        assert len({law.id for law in collected}) == 150
+        unique = {law.id for law in collected}
+        assert len(unique) >= 148, (
+            f"{len(collected) - len(unique)} duplicates across 150 items — "
+            "exceeds expected drift from concurrent writes"
+        )
 
 
 # ---- auth / errors ---------------------------------------------------

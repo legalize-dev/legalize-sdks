@@ -9,7 +9,6 @@ import pytest
 from legalize import AsyncLegalize
 from legalize.models import CountryInfo, StatsResponse
 
-
 pytestmark = pytest.mark.asyncio
 
 
