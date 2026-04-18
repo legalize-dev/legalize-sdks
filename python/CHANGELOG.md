@@ -7,15 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-04-18
+
+Initial public release. Published to PyPI as
+[`legalize`](https://pypi.org/project/legalize/0.1.0/).
+
 ### Added
 
-- Initial release of the Python SDK.
 - Sync (`Legalize`) and async (`AsyncLegalize`) clients covering every
   public `/api/v1/*` endpoint.
-- Typed Pydantic models generated from the OpenAPI spec.
-- `Webhook.verify` for HMAC-SHA256 signature verification with
-  replay protection.
-- Retry with exponential backoff + jitter, respecting `Retry-After`.
-- Auto-paginating iterators for laws and reforms.
-- Typed error hierarchy (`APIError`, `AuthenticationError`,
-  `RateLimitError`, etc.).
+- Typed Pydantic v2 models generated from the canonical OpenAPI spec.
+- `Webhook.verify` — HMAC-SHA256 signature verification with
+  constant-time compare and a 5-minute anti-replay window.
+- Retry with exponential backoff + jitter. Respects the `Retry-After`
+  header; caps server-provided delays at the configured `max_delay`.
+- Auto-paginating iterators for laws and reforms (`iter`).
+- Typed error hierarchy: `APIError` plus `AuthenticationError`,
+  `ForbiddenError`, `NotFoundError`, `InvalidRequestError`,
+  `ValidationError`, `RateLimitError`, `ServerError`,
+  `ServiceUnavailableError`, `APIConnectionError`, `APITimeoutError`,
+  `WebhookVerificationError`.
+- `Legalize-API-Version` header on every request for forward
+  compatibility.
+- Flask and FastAPI example webhook servers, plus CLI-style examples
+  for listing, searching, time-travel, stats, and async fan-out.
+
+### Quality
+
+- 280 tests (249 offline + 31 live against `https://legalize.dev`).
+- 97.77 % coverage with a 95 % gate.
+- `mypy --strict` clean.
+- CI matrix: Python 3.10, 3.11, 3.12, 3.13.
+
+[0.1.0]: https://github.com/legalize-dev/legalize-sdks/releases/tag/python-v0.1.0
