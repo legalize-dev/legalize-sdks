@@ -1,27 +1,23 @@
-version: "2"
-
 run:
   timeout: 5m
 
 linters:
-  default: none
+  disable-all: true
   enable:
     - errcheck
     - govet
     - staticcheck
     - revive
     - gosec
-  settings:
-    revive:
-      rules:
-        - name: exported
-          disabled: false
-        - name: package-comments
-          disabled: false
-    gosec:
-      excludes:
-        - G404 # jitter uses math/rand intentionally (not crypto)
-
-formatters:
-  enable:
     - gofumpt
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        disabled: false
+      - name: package-comments
+        disabled: false
+  gosec:
+    excludes:
+      - G404 # jitter uses math/rand intentionally (not crypto)
