@@ -13,7 +13,7 @@
 import Fastify from "fastify";
 import rateLimit from "@fastify/rate-limit";
 
-import { Webhook, WebhookVerificationError } from "legalize";
+import { Webhook, WebhookVerificationError } from "@legalize-dev/sdk";
 
 const SECRET = process.env.LEGALIZE_WHSEC!;
 if (!SECRET) {

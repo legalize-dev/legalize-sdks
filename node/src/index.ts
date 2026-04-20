@@ -3,7 +3,7 @@
  *
  * Typical usage:
  *
- *   import { Legalize } from "legalize";
+ *   import { Legalize } from "@legalize-dev/sdk";
  *
  *   const client = new Legalize({ apiKey: "leg_..." });
  *   for await (const law of client.laws.iter("es", { lawType: "ley_organica" })) {

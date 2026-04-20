@@ -11,7 +11,7 @@ Official client libraries for the [Legalize API](https://legalize.dev/api) — l
 | Language | Package | Source | Tag for release |
 |---|---|---|---|
 | Python | [`legalize`](https://pypi.org/project/legalize/) on PyPI | [`python/`](python/) | `python-vX.Y.Z` |
-| Node / TypeScript | `legalize` on npm | [`node/`](node/) | `node-vX.Y.Z` |
+| Node / TypeScript | [`@legalize-dev/sdk`](https://www.npmjs.com/package/@legalize-dev/sdk) on npm | [`node/`](node/) | `node-vX.Y.Z` |
 | Go | `github.com/legalize-dev/legalize-sdks/go` | [`go/`](go/) | `go/vX.Y.Z` |
 | curl | — | [`curl/`](curl/) | — |
 
@@ -45,11 +45,11 @@ content = client.laws.at_commit(country="es", law_id="ley_organica_3_2018", sha=
 ### Node / TypeScript
 
 ```bash
-npm install legalize
+npm install @legalize-dev/sdk
 ```
 
 ```ts
-import { Legalize } from "legalize";
+import { Legalize } from "@legalize-dev/sdk";
 
 const client = new Legalize();            // zero-config
 

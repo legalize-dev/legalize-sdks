@@ -17,7 +17,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 
-import { Webhook, WebhookVerificationError } from "legalize";
+import { Webhook, WebhookVerificationError } from "@legalize-dev/sdk";
 
 const app = express();
 const SECRET = process.env.LEGALIZE_WHSEC!;

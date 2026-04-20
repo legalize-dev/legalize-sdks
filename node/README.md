@@ -1,17 +1,17 @@
-# legalize
+# @legalize-dev/sdk
 
-[![npm](https://img.shields.io/npm/v/legalize.svg)](https://www.npmjs.com/package/legalize)
-[![Node](https://img.shields.io/node/v/legalize.svg)](https://www.npmjs.com/package/legalize)
+[![npm](https://img.shields.io/npm/v/@legalize-dev/sdk.svg)](https://www.npmjs.com/package/@legalize-dev/sdk)
+[![Node](https://img.shields.io/node/v/@legalize-dev/sdk.svg)](https://www.npmjs.com/package/@legalize-dev/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/legalize-dev/legalize-sdks/blob/main/LICENSE)
 
 Official Node client for the [Legalize API](https://legalize.dev/api) — legal texts as structured, versioned data.
 
 ```bash
-npm install legalize
+npm install @legalize-dev/sdk
 ```
 
 ```ts
-import { Legalize } from "legalize";
+import { Legalize } from "@legalize-dev/sdk";
 
 const client = new Legalize({ apiKey: "leg_..." });
 
@@ -88,7 +88,7 @@ re-serialized JSON will NOT verify:
 
 ```ts
 import express from "express";
-import { Webhook, WebhookVerificationError } from "legalize";
+import { Webhook, WebhookVerificationError } from "@legalize-dev/sdk";
 
 app.post(
   "/webhooks/legalize",
@@ -133,7 +133,7 @@ export LEGALIZE_API_VERSION=v1
 ```
 
 ```ts
-import { Legalize } from "legalize";
+import { Legalize } from "@legalize-dev/sdk";
 
 const client = new Legalize(); // picks everything up from the environment
 ```
@@ -141,7 +141,7 @@ const client = new Legalize(); // picks everything up from the environment
 ### Explicit
 
 ```ts
-import { Legalize, RetryPolicy } from "legalize";
+import { Legalize, RetryPolicy } from "@legalize-dev/sdk";
 
 const client = new Legalize({
   apiKey: "leg_...",
@@ -222,7 +222,7 @@ import {
   APIConnectionError,      // network failure
   APITimeoutError,         // timeout
   WebhookVerificationError,
-} from "legalize";
+} from "@legalize-dev/sdk";
 ```
 
 Every `APIError` exposes `.statusCode`, `.code`, `.body`, `.response`,
