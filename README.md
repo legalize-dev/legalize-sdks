@@ -3,7 +3,9 @@
 [![python-ci](https://github.com/legalize-dev/legalize-sdks/actions/workflows/python-ci.yml/badge.svg)](https://github.com/legalize-dev/legalize-sdks/actions/workflows/python-ci.yml)
 [![node-ci](https://github.com/legalize-dev/legalize-sdks/actions/workflows/node-ci.yml/badge.svg)](https://github.com/legalize-dev/legalize-sdks/actions/workflows/node-ci.yml)
 [![go-ci](https://github.com/legalize-dev/legalize-sdks/actions/workflows/go-ci.yml/badge.svg)](https://github.com/legalize-dev/legalize-sdks/actions/workflows/go-ci.yml)
+[![codeql](https://github.com/legalize-dev/legalize-sdks/actions/workflows/codeql.yml/badge.svg)](https://github.com/legalize-dev/legalize-sdks/actions/workflows/codeql.yml)
 [![PyPI](https://img.shields.io/pypi/v/legalize.svg)](https://pypi.org/project/legalize/)
+[![npm](https://img.shields.io/npm/v/@legalize-dev/sdk.svg)](https://www.npmjs.com/package/@legalize-dev/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Official client libraries for the [Legalize API](https://legalize.dev/api) — legal texts as structured, versioned data.
