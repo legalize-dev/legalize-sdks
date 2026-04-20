@@ -34,7 +34,8 @@ def incoming() -> tuple[str, int]:
             secret=SECRET,
         )
     except WebhookVerificationError:
-        abort(400)
+        abort(400)  # abort() raises — nothing below runs
+        return "", 400  # unreachable, but satisfies static analysis
 
     print(f"[{event.type}] {event.id} {event.data}")
 

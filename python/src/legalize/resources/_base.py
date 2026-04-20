@@ -29,7 +29,8 @@ class ClientProtocol(Protocol):
         params: dict[str, Any] | None = ...,
         json: Any = ...,
         extra_headers: dict[str, str] | None = ...,
-    ) -> Any: ...
+    ) -> Any:
+        """Execute a request and return the parsed JSON body."""
 
 
 class AsyncClientProtocol(Protocol):
@@ -43,7 +44,8 @@ class AsyncClientProtocol(Protocol):
         params: dict[str, Any] | None = ...,
         json: Any = ...,
         extra_headers: dict[str, str] | None = ...,
-    ) -> Any: ...
+    ) -> Any:
+        """Execute a request and return the parsed JSON body."""
 
 
 class _SyncResource:

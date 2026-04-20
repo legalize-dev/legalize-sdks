@@ -115,11 +115,8 @@ def base_url() -> str:
 
 @pytest.fixture
 def client(api_key: str, base_url: str) -> Legalize:
-    c = Legalize(api_key=api_key, base_url=base_url, timeout=30.0)
-    try:
+    with Legalize(api_key=api_key, base_url=base_url, timeout=30.0) as c:
         yield c
-    finally:
-        c.close()
 
 
 @pytest.fixture(scope="session")

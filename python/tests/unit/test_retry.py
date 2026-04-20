@@ -119,23 +119,18 @@ class TestRetryIntegration:
             httpx.Response(200, json=[]),
         ]
         c, calls = _build_client(responses, max_retries=3)
-        try:
+        with c:
             out = c.request("GET", "/api/v1/countries")
             assert out == []
             assert calls[0] == 3
-        finally:
-            c.close()
 
     def test_gives_up_after_max_retries(self):
         responses = [httpx.Response(500, json={"detail": "nope"})] * 5
         c, calls = _build_client(responses, max_retries=2)
-        try:
-            with pytest.raises(APIError):
-                c.request("GET", "/api/v1/countries")
-            # max_retries=2 → 1 initial + 2 retries = 3 calls
-            assert calls[0] == 3
-        finally:
-            c.close()
+        with c, pytest.raises(APIError):
+            c.request("GET", "/api/v1/countries")
+        # max_retries=2 → 1 initial + 2 retries = 3 calls
+        assert calls[0] == 3
 
     def test_does_not_retry_404(self):
         responses = [
@@ -143,12 +138,9 @@ class TestRetryIntegration:
             httpx.Response(200, json=[]),
         ]
         c, calls = _build_client(responses, max_retries=3)
-        try:
-            with pytest.raises(APIError):
-                c.request("GET", "/api/v1/countries")
-            assert calls[0] == 1
-        finally:
-            c.close()
+        with c, pytest.raises(APIError):
+            c.request("GET", "/api/v1/countries")
+        assert calls[0] == 1
 
     def test_429_respects_retry_after_from_body(self):
         responses = [
@@ -160,11 +152,8 @@ class TestRetryIntegration:
         ]
         c, calls = _build_client(responses, max_retries=3)
         slept: list[float] = []
-        with mock.patch("time.sleep", side_effect=slept.append):
-            try:
-                c.request("GET", "/api/v1/countries")
-            finally:
-                c.close()
+        with mock.patch("time.sleep", side_effect=slept.append), c:
+            c.request("GET", "/api/v1/countries")
         assert calls[0] == 2
         # Retry-After from header is what sleep sees, not the body. The
         # body field is only exposed on RateLimitError. Sleep uses the
@@ -193,11 +182,8 @@ class TestRetryIntegration:
             transport=httpx.MockTransport(handler),
         )
         slept: list[float] = []
-        with mock.patch("time.sleep", side_effect=slept.append):
-            try:
-                c.request("GET", "/api/v1/countries")
-            finally:
-                c.close()
+        with mock.patch("time.sleep", side_effect=slept.append), c:
+            c.request("GET", "/api/v1/countries")
         assert counter[0] == 2
         assert slept == [2]
 
@@ -221,11 +207,8 @@ class TestRetryIntegration:
             transport=httpx.MockTransport(handler),
         )
         slept: list[float] = []
-        with mock.patch("time.sleep", side_effect=slept.append):
-            try:
-                c.request("GET", "/api/v1/countries")
-            finally:
-                c.close()
+        with mock.patch("time.sleep", side_effect=slept.append), c:
+            c.request("GET", "/api/v1/countries")
         assert slept == [5]
 
     def test_transport_error_retries_then_raises(self):
@@ -238,14 +221,12 @@ class TestRetryIntegration:
             retry=RetryPolicy(max_retries=1, initial_delay=0, max_delay=0),
             transport=httpx.MockTransport(handler),
         )
-        try:
-            with (
-                mock.patch("time.sleep"),
-                pytest.raises(APITimeoutError),
-            ):
-                c.request("GET", "/api/v1/countries")
-        finally:
-            c.close()
+        with (
+            c,
+            mock.patch("time.sleep"),
+            pytest.raises(APITimeoutError),
+        ):
+            c.request("GET", "/api/v1/countries")
 
     def test_raised_error_is_rate_limit_with_retry_after(self):
         response = httpx.Response(
@@ -253,12 +234,9 @@ class TestRetryIntegration:
             json={"detail": {"error": "rate", "message": "slow", "retry_after": 42}},
         )
         c, _ = _build_client([response], max_retries=0)
-        try:
-            with pytest.raises(RateLimitError) as ei:
-                c.request("GET", "/api/v1/countries")
-            assert ei.value.retry_after == 42
-        finally:
-            c.close()
+        with c, pytest.raises(RateLimitError) as ei:
+            c.request("GET", "/api/v1/countries")
+        assert ei.value.retry_after == 42
 
 
 # ---- no retries when max_retries=0 ------------------------------------
@@ -268,12 +246,9 @@ class TestZeroRetries:
     def test_no_retries_fires_once(self):
         responses = [httpx.Response(500, json={"detail": "boom"})]
         c, calls = _build_client(responses, max_retries=0)
-        try:
-            with pytest.raises(APIError):
-                c.request("GET", "/api/v1/countries")
-            assert calls[0] == 1
-        finally:
-            c.close()
+        with c, pytest.raises(APIError):
+            c.request("GET", "/api/v1/countries")
+        assert calls[0] == 1
 
 
 # Tell linters the fixture holder is used even when tests skip it

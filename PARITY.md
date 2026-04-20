@@ -94,12 +94,63 @@ Every client MUST also expose:
 
 ## 3. Resources and methods
 
-> Filled in after the Python audit finalizes — the audit report drives
-> the exhaustive signature tables below. See [python source](python/src/legalize/resources/) for the current shape.
+The signature source-of-truth is the Python reference implementation
+in [`python/src/legalize/resources/`](python/src/legalize/resources/).
+Every SDK must expose the same methods with the same parameter names
+(translated to the language's casing convention) and the same
+semantic behaviour.
 
-_(This section is authored from the Python source after the audit
-completes. Intentionally left minimal in this skeleton so language
-agents cannot start drifting before the Python reference is verified.)_
+### countries
+
+- `countries.list()` → `list[CountryInfo]`
+
+### jurisdictions
+
+- `jurisdictions.list(country)` → `list[JurisdictionInfo]`
+
+### law_types
+
+- `law_types.list(country)` → `list[str]`
+
+### laws
+
+- `laws.list(country, *, page=1, per_page=50, law_type, year, status, jurisdiction, from_date, to_date, sort)` → `PaginatedLaws`
+- `laws.search(country, q, *, page=1, per_page=50, ...)` → `PaginatedLaws`
+  (convenience wrapper that sets `q=...`)
+- `laws.iter(country, *, per_page=100, limit, ...)` → lazy iterator of `LawSearchResult`
+- `laws.search_iter(country, q, *, per_page=100, limit, ...)` → lazy iterator
+- `laws.retrieve(country, law_id)` → `LawDetail` (includes `content` Markdown)
+- `laws.meta(country, law_id)` → `LawMeta` (no content; fast)
+- `laws.commits(country, law_id)` → `CommitsResponse`
+- `laws.at_commit(country, law_id, sha)` → `LawAtCommitResponse`
+
+### reforms
+
+- `reforms.list(country, law_id, *, limit=50, offset=0)` → `ReformsResponse`
+- `reforms.iter(country, law_id, *, per_page=100, limit)` → lazy iterator of `Reform`
+
+### stats
+
+- `stats.retrieve(country, *, jurisdiction=None)` → `StatsResponse`
+
+### webhooks
+
+- `webhooks.create(url, events, *, description=None)` → endpoint with one-time secret
+- `webhooks.list()` → list of endpoints (secrets redacted)
+- `webhooks.retrieve(endpoint_id)` → endpoint
+- `webhooks.update(endpoint_id, *, url=None, events=None, description=None, active=None)` → endpoint
+- `webhooks.delete(endpoint_id)` → `None`
+- `webhooks.deliveries(endpoint_id, *, page=1, per_page=50, status=None)` → page of deliveries
+- `webhooks.retry(endpoint_id, delivery_id)` → delivery
+- `webhooks.test(endpoint_id)` → test delivery
+
+### Response types
+
+All typed responses match the schemas in
+[`openapi-sdk.json`](openapi-sdk.json). Generated models live in
+`python/src/legalize/models/_generated.py` for Python; Node and Go
+generate equivalents into their own `models/` trees and re-export a
+curated subset.
 
 ---
 

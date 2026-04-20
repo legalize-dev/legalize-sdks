@@ -32,10 +32,6 @@ class TestPageIterator:
 
     def test_stops_on_short_page_even_without_total(self):
         pages = {1: ([1, 2, 3], 999), 2: ([4, 5], 999), 3: ([], 999)}
-
-        def fetch(page, per):
-            return pages[page]
-
         # per_page=3, page 2 returns 2 items < 3 → stop without calling page 3
         calls = []
 

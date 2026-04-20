@@ -137,14 +137,11 @@ class TestLawsRetrieve:
 
     @pytest.fixture(scope="class")
     def stable_law_id(self, api_key, base_url):
-        client = Legalize(api_key=api_key, base_url=base_url)
-        try:
+        with Legalize(api_key=api_key, base_url=base_url) as client:
             page = client.laws.list("es", law_type="constitucion", per_page=1)
             if not page.results:
                 pytest.skip("no constitucion found — dataset shape changed")
             return page.results[0].id
-        finally:
-            client.close()
 
     def test_meta(self, client: Legalize, stable_law_id: str):
         meta = client.laws.meta("es", stable_law_id)
@@ -269,12 +266,11 @@ class TestAuthErrors:
     def test_bad_key_401(self, base_url: str):
         from legalize import AuthenticationError
 
-        c = Legalize(api_key="leg_invalid_key_xxx", base_url=base_url)
-        try:
-            with pytest.raises(AuthenticationError):
-                c.countries.list()
-        finally:
-            c.close()
+        with (
+            Legalize(api_key="leg_invalid_key_xxx", base_url=base_url) as c,
+            pytest.raises(AuthenticationError),
+        ):
+            c.countries.list()
 
     def test_nonexistent_country_404(self, client: Legalize):
         with pytest.raises(NotFoundError):

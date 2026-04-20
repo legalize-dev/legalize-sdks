@@ -91,29 +91,17 @@ class TestLifecycle:
 
 class TestURLBuilding:
     def test_relative_path_gets_base_url(self):
-        c = Legalize(api_key="leg_t", base_url="https://example.test")
-        try:
+        with Legalize(api_key="leg_t", base_url="https://example.test") as c:
             assert c._build_url("/api/v1/countries") == "https://example.test/api/v1/countries"
-        finally:
-            c.close()
 
     def test_absolute_url_passes_through(self):
-        c = Legalize(api_key="leg_t", base_url="https://example.test")
-        try:
+        with Legalize(api_key="leg_t", base_url="https://example.test") as c:
             assert c._build_url("https://other.test/x") == "https://other.test/x"
-        finally:
-            c.close()
 
     def test_path_without_leading_slash(self):
-        c = Legalize(api_key="leg_t", base_url="https://ex.test")
-        try:
+        with Legalize(api_key="leg_t", base_url="https://ex.test") as c:
             assert c._build_url("api/v1/countries") == "https://ex.test/api/v1/countries"
-        finally:
-            c.close()
 
     def test_trailing_slash_on_base_url(self):
-        c = Legalize(api_key="leg_t", base_url="https://ex.test/")
-        try:
+        with Legalize(api_key="leg_t", base_url="https://ex.test/") as c:
             assert c._build_url("/api/v1") == "https://ex.test/api/v1"
-        finally:
-            c.close()

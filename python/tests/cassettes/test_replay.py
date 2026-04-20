@@ -35,38 +35,29 @@ def _client() -> Legalize:
 def test_countries_list(vcr_cassette):
     if not _cassette_exists(vcr_cassette) and os.environ.get("VCR_RECORD", "none") == "none":
         pytest.skip(f"cassette {vcr_cassette} not recorded")
-    c = _client()
-    try:
+    with _client() as c:
         out = c.countries.list()
         assert len(out) > 0
         codes = {x.country for x in out}
         # Sanity checks that should hold for the foreseeable future.
         assert "es" in codes
-    finally:
-        c.close()
 
 
 @pytest.mark.vcr
 def test_spain_stats(vcr_cassette):
     if not _cassette_exists(vcr_cassette) and os.environ.get("VCR_RECORD", "none") == "none":
         pytest.skip(f"cassette {vcr_cassette} not recorded")
-    c = _client()
-    try:
+    with _client() as c:
         stats = c.stats.retrieve("es")
         assert stats.country == "es"
         assert len(stats.law_types) > 0
-    finally:
-        c.close()
 
 
 @pytest.mark.vcr
 def test_spain_first_page_of_laws(vcr_cassette):
     if not _cassette_exists(vcr_cassette) and os.environ.get("VCR_RECORD", "none") == "none":
         pytest.skip(f"cassette {vcr_cassette} not recorded")
-    c = _client()
-    try:
+    with _client() as c:
         page = c.laws.list("es", page=1, per_page=5)
         assert page.country == "es"
         assert len(page.results) <= 5
-    finally:
-        c.close()

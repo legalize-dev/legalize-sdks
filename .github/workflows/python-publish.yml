@@ -144,7 +144,7 @@ jobs:
           name: python-dist
           path: dist/
       - name: Publish (Trusted Publishing + attestations)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@6733eb7d741f0b11ec6a39b58540dab7590f9b7d # v1.14.0
         with:
           attestations: true
 

@@ -49,8 +49,6 @@ class TestNonJSONBody:
 
     @pytest.mark.asyncio
     async def test_async_raises_apierror(self, aclient, handler):
-        aclient  # noqa
-
         def h(_req):
             return httpx.Response(
                 200, content=b"<html>oops</html>", headers={"content-type": "text/html"}
@@ -67,66 +65,60 @@ class TestTransportErrors:
         def handler(_req):
             raise httpx.ReadTimeout("slow")
 
-        c = Legalize(
-            api_key="leg_test",
-            base_url="http://testserver",
-            retry=RetryPolicy(max_retries=0),
-            transport=httpx.MockTransport(handler),
-        )
-        try:
-            with pytest.raises(APITimeoutError):
-                c.request("GET", "/x")
-        finally:
-            c.close()
+        with (
+            Legalize(
+                api_key="leg_test",
+                base_url="http://testserver",
+                retry=RetryPolicy(max_retries=0),
+                transport=httpx.MockTransport(handler),
+            ) as c,
+            pytest.raises(APITimeoutError),
+        ):
+            c.request("GET", "/x")
 
     def test_sync_connect_error_no_retry(self):
         def handler(_req):
             raise httpx.ConnectError("no route")
 
-        c = Legalize(
-            api_key="leg_test",
-            base_url="http://testserver",
-            retry=RetryPolicy(max_retries=0),
-            transport=httpx.MockTransport(handler),
-        )
-        try:
-            with pytest.raises(APIConnectionError):
-                c.request("GET", "/x")
-        finally:
-            c.close()
+        with (
+            Legalize(
+                api_key="leg_test",
+                base_url="http://testserver",
+                retry=RetryPolicy(max_retries=0),
+                transport=httpx.MockTransport(handler),
+            ) as c,
+            pytest.raises(APIConnectionError),
+        ):
+            c.request("GET", "/x")
 
     def test_sync_other_exception_reraises(self):
         def handler(_req):
             raise RuntimeError("unexpected")
 
-        c = Legalize(
-            api_key="leg_test",
-            base_url="http://testserver",
-            retry=RetryPolicy(max_retries=0),
-            transport=httpx.MockTransport(handler),
-        )
-        try:
-            with pytest.raises(RuntimeError, match="unexpected"):
-                c.request("GET", "/x")
-        finally:
-            c.close()
+        with (
+            Legalize(
+                api_key="leg_test",
+                base_url="http://testserver",
+                retry=RetryPolicy(max_retries=0),
+                transport=httpx.MockTransport(handler),
+            ) as c,
+            pytest.raises(RuntimeError, match="unexpected"),
+        ):
+            c.request("GET", "/x")
 
     @pytest.mark.asyncio
     async def test_async_timeout_no_retry(self):
         def handler(_req):
             raise httpx.ReadTimeout("slow")
 
-        c = AsyncLegalize(
+        async with AsyncLegalize(
             api_key="leg_test",
             base_url="http://testserver",
             retry=RetryPolicy(max_retries=0),
             transport=httpx.MockTransport(handler),
-        )
-        try:
+        ) as c:
             with pytest.raises(APITimeoutError):
                 await c.request("GET", "/x")
-        finally:
-            await c.aclose()
 
     @pytest.mark.asyncio
     async def test_async_connect_error_retries_and_gives_up(self):
@@ -218,11 +210,8 @@ class TestAsyncRetryBranches:
 
 class TestLastResponse:
     def test_none_before_any_request(self):
-        c = Legalize(api_key="leg_test", base_url="http://x")
-        try:
+        with Legalize(api_key="leg_test", base_url="http://x") as c:
             assert c.last_response is None
-        finally:
-            c.close()
 
     def test_populated_after_request(self, client, handler):
         handler[0] = lambda req: httpx.Response(
