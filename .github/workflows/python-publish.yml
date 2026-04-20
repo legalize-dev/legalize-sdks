@@ -146,8 +146,14 @@ jobs:
         with:
           name: python-dist
           path: dist/
+      # PyPA's README explicitly instructs users to reference this
+      # action via the `release/v1` branch, not a tag/SHA:
+      # https://github.com/pypa/gh-action-pypi-publish#usage
+      # SHA-pinning breaks because the action ships a Docker image
+      # whose manifest only resolves for the `release-v1` tag.
+      # lgtm[actions/unpinned-tag]
       - name: Publish (Trusted Publishing + attestations)
-        uses: pypa/gh-action-pypi-publish@6733eb7d741f0b11ec6a39b58540dab7590f9b7d # v1.14.0
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
 
