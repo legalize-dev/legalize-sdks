@@ -52,16 +52,18 @@ func main() {
 			return
 		}
 
-		// Structured logging with slog is log-injection-safe: even if
-		// event.Type or event.Data contain newlines, slog writes them
-		// as a single structured record, not forged log lines.
+		// Structured logging with slog is log-injection-safe: each
+		// field is recorded independently, so newlines in event.Type
+		// or event.Data cannot forge log lines. gosec's taint check
+		// (G706) is regex-based and flags any user-derived value in a
+		// log call; it does not understand slog's structured model.
 		switch event.Type {
 		case "law.updated", "law.created", "law.repealed", "reform.created":
-			slog.Info("received webhook", "type", event.Type, "data", string(event.Data))
+			slog.Info("received webhook", "type", event.Type, "data", string(event.Data)) //nolint:gosec // slog is injection-safe
 		case "test.ping":
 			slog.Info("received webhook", "type", "test.ping")
 		default:
-			slog.Warn("unknown event type", "type", event.Type)
+			slog.Warn("unknown event type", "type", event.Type) //nolint:gosec // slog is injection-safe
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -70,7 +72,7 @@ func main() {
 	if v := os.Getenv("ADDR"); v != "" {
 		addr = v
 	}
-	slog.Info("listening", "addr", addr)
+	slog.Info("listening", "addr", addr) //nolint:gosec // slog is injection-safe; addr comes from env
 	server := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	log.Fatal(server.ListenAndServe())
 }
