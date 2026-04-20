@@ -1,0 +1,63 @@
+{
+  "name": "legalize",
+  "version": "0.1.0",
+  "description": "Official Node client for the Legalize API",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "legalize",
+    "legal",
+    "laws",
+    "api",
+    "sdk"
+  ],
+  "license": "MIT",
+  "repository": "github:legalize-dev/legalize-sdks",
+  "homepage": "https://legalize.dev/api/docs",
+  "bugs": "https://github.com/legalize-dev/legalize-sdks/issues",
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "generate:types": "openapi-typescript ../openapi-sdk.json -o src/generated.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^2",
+    "eslint": "^9",
+    "openapi-typescript": "^7",
+    "prettier": "^3",
+    "tsup": "^8",
+    "typescript": "^5.4",
+    "typescript-eslint": "^8",
+    "vitest": "^2"
+  }
+}
