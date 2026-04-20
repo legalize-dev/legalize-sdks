@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fall through to the default. The contract is specified in the
   top-level [`ENVIRONMENT.md`](../ENVIRONMENT.md) and applies to every
   language SDK.
+- `Retry-After` header parsing now accepts the HTTP-date form
+  (`Retry-After: Wed, 21 Oct 2025 07:28:00 GMT`) in addition to the
+  delta-seconds form. Per RFC 9110. Past timestamps clamp to zero.
+
+### Fixed
+
+- `last_response` is now populated when a request ends in an `APIError`
+  (both sync and async). Previously the attribute stayed at its old
+  value after 401/403/404/429/5xx, making it impossible to read
+  `X-RateLimit-*` and `X-Request-ID` headers on the failing response.
+- Resource modules no longer form an import cycle with the client.
+  Resources depend on a minimal `ClientProtocol` / `AsyncClientProtocol`
+  in `resources/_base.py`, keeping the module graph a DAG.
 
 ### Changed
 

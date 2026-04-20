@@ -133,13 +133,10 @@ class TestSDKCoverage:
         sorted(set(ENDPOINT_TO_SDK.values())),
     )
     def test_sync_methods_are_callable(self, resource, method):
-        client = Legalize(api_key="leg_test", base_url="http://x")
-        try:
+        with Legalize(api_key="leg_test", base_url="http://x") as client:
             r = getattr(client, resource)
             m = getattr(r, method)
             assert callable(m)
-        finally:
-            client.close()
 
     @pytest.mark.parametrize(
         ("resource", "method"),

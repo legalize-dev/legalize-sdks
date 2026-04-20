@@ -19,7 +19,9 @@ exponential backoff with full jitter, capped at ``max_delay``.
 from __future__ import annotations
 
 import random
+import time
 from dataclasses import dataclass
+from email.utils import parsedate_to_datetime
 
 DEFAULT_MAX_RETRIES = 3
 DEFAULT_INITIAL_DELAY = 0.5
@@ -83,17 +85,34 @@ class RetryPolicy:
 def parse_retry_after(header: str | None) -> float | None:
     """Parse the ``Retry-After`` header to seconds.
 
-    Accepts either an integer number of seconds (the common case) or
-    an HTTP-date. We intentionally do not support HTTP-date here to
-    keep the SDK small — servers we care about send seconds.
+    RFC 9110 allows two forms:
+
+    - A non-negative integer (delta-seconds): ``Retry-After: 120``.
+    - An HTTP-date: ``Retry-After: Wed, 21 Oct 2025 07:28:00 GMT``.
+
+    We accept both. Unparseable input returns ``None`` so the caller
+    can fall back to its own backoff policy. HTTP-date values in the
+    past clamp to ``0``.
     """
     if header is None:
         return None
+    header = header.strip()
+    if not header:
+        return None
+    # Delta-seconds form (must be all digits; negative values not allowed).
     try:
         value = int(header)
+    except ValueError:
+        pass
+    else:
+        return float(max(0, value))
+    # HTTP-date form.
+    try:
+        dt = parsedate_to_datetime(header)
     except (TypeError, ValueError):
         return None
-    return max(0, value)
+    delta = dt.timestamp() - time.time()
+    return max(0.0, delta)
 
 
 __all__ = [

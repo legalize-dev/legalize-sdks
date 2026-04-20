@@ -13,6 +13,7 @@ inputs:
 
 from __future__ import annotations
 
+import contextlib
 from unittest import mock
 
 import httpx
@@ -63,14 +64,8 @@ def test_call_count_bounded(max_retries, statuses):
     policy = RetryPolicy(max_retries=max_retries, initial_delay=0, max_delay=0)
     seq = [(s, None) for s in statuses]
     c, counter = _build_client(seq, policy=policy)
-    try:
-        with mock.patch("time.sleep"):
-            try:
-                c.request("GET", "/api/v1/countries")
-            except APIError:
-                pass
-    finally:
-        c.close()
+    with c, mock.patch("time.sleep"), contextlib.suppress(APIError):
+        c.request("GET", "/api/v1/countries")
     assert counter[0] <= max_retries + 1
 
 
@@ -85,12 +80,8 @@ def test_never_retries_non_retryable(status, max_retries):
     policy = RetryPolicy(max_retries=max_retries, initial_delay=0, max_delay=0)
     seq = [(status, None)] * 10
     c, counter = _build_client(seq, policy=policy)
-    try:
-        with mock.patch("time.sleep"):
-            with pytest.raises(APIError):
-                c.request("GET", "/api/v1/countries")
-    finally:
-        c.close()
+    with c, mock.patch("time.sleep"), pytest.raises(APIError):
+        c.request("GET", "/api/v1/countries")
     assert counter[0] == 1  # exactly one call, zero retries
 
 
@@ -110,11 +101,8 @@ def test_retry_after_exact_sleep(retry_after, max_delay):
     ]
     c, counter = _build_client(seq, policy=policy)
     slept: list[float] = []
-    with mock.patch("time.sleep", side_effect=slept.append):
-        try:
-            c.request("GET", "/api/v1/countries")
-        finally:
-            c.close()
+    with c, mock.patch("time.sleep", side_effect=slept.append):
+        c.request("GET", "/api/v1/countries")
     assert slept == [retry_after]
     assert counter[0] == 2
 

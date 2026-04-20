@@ -29,6 +29,8 @@ from typing import Any
 
 import httpx
 
+from legalize._retry import parse_retry_after
+
 
 class LegalizeError(Exception):
     """Base for everything the SDK raises."""
@@ -233,23 +235,15 @@ def _parse_error_body(
         elif isinstance(detail, str):
             message = detail
 
-    if not message:
-        # Try Retry-After header for 429 without a body
-        retry_after_hdr = response.headers.get("retry-after")
-        if retry_after_hdr and "retry_after" not in extras:
-            try:
-                extras["retry_after"] = int(retry_after_hdr)
-            except ValueError:
-                pass
-
-    # Retry-After header always wins as a fallback even when we got a body
+    # Populate retry_after from the header if the server did not put
+    # it in the body. Accepts both delta-seconds and HTTP-date forms
+    # (see parse_retry_after). Malformed headers yield None and are
+    # intentionally dropped — the caller will fall back to its own
+    # backoff policy rather than crash on a server bug.
     if "retry_after" not in extras:
-        hdr = response.headers.get("retry-after")
-        if hdr:
-            try:
-                extras["retry_after"] = int(hdr)
-            except ValueError:
-                pass
+        parsed = parse_retry_after(response.headers.get("retry-after"))
+        if parsed is not None:
+            extras["retry_after"] = parsed
 
     if not message:
         text = response.text.strip()

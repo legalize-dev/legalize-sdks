@@ -22,10 +22,9 @@ from __future__ import annotations
 
 import os
 import platform
-import sys
 import time
 from types import TracebackType
-from typing import Any, TypeVar
+from typing import Any
 
 import httpx
 
@@ -43,8 +42,6 @@ DEFAULT_API_VERSION = "v1"
 DEFAULT_TIMEOUT = 30.0
 
 KEY_PREFIX = "leg_"
-
-T = TypeVar("T")
 
 
 def _default_user_agent() -> str:
@@ -323,6 +320,9 @@ class Legalize(_BaseClient):
                 return response
 
             if not self._retry.should_retry(attempt, status=response.status_code):
+                # Expose the failing response so callers can inspect
+                # rate-limit headers / request IDs before raising.
+                self._last_response = response
                 raise APIError.from_response(response)
 
             retry_after = parse_retry_after(response.headers.get("retry-after"))
@@ -464,6 +464,9 @@ class AsyncLegalize(_BaseClient):
                     ) from exc
 
             if not self._retry.should_retry(attempt, status=response.status_code):
+                # Expose the failing response so callers can inspect
+                # rate-limit headers / request IDs before raising.
+                self._last_response = response
                 raise APIError.from_response(response)
 
             retry_after = parse_retry_after(response.headers.get("retry-after"))
@@ -498,8 +501,3 @@ __all__ = [
     "AsyncLegalize",
     "Legalize",
 ]
-
-
-# Silence unused-import warnings; sys and TypeVar are part of stable API shape
-# (kept importable for tests that probe module attrs).
-_ = (sys, TypeVar)

@@ -178,16 +178,14 @@ class TestLawHistory:
         Uses ``stats.most_reformed_laws`` which is sorted by reform
         count. Avoids hard-coding a law id that might change.
         """
-        client = Legalize(api_key=api_key, base_url=base_url)
-        try:
+        with Legalize(api_key=api_key, base_url=base_url) as client:
             stats = client.stats.retrieve("es")
             for row in stats.most_reformed_laws:
                 count = row.get("reform_count") or row.get("count") or 0
                 if row.get("id") and count > 0:
                     return row["id"]
             pytest.skip("no most_reformed_laws returned — unexpected")
-        finally:
-            client.close()
+        return ""  # unreachable — pytest.skip raises, but keeps CodeQL happy
 
     def test_commits(self, client: Legalize, reformed_law: str):
         resp = client.laws.commits("es", reformed_law)
