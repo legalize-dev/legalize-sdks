@@ -31,4 +31,4 @@ jobs:
         env:
           LEGALIZE_API_KEY: ${{ secrets.LEGALIZE_API_KEY }}
           LEGALIZE_BASE_URL: https://legalize.dev
-        run: npx vitest run tests/integration
+        run: npm run test:integration

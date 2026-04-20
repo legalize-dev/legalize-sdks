@@ -3,7 +3,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
+    // Offline tests only. Integration tests live under tests/integration/
+    // and run via the `npm run test:integration` script (CI: node-integration.yml).
     include: ["tests/**/*.test.ts"],
+    exclude: ["node_modules", "dist", "tests/integration/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
