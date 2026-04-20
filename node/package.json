@@ -43,7 +43,7 @@
     "build": "tsup",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "test:integration": "vitest run tests/integration",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "generate:types": "openapi-typescript ../openapi-sdk.json -o src/generated.ts",
