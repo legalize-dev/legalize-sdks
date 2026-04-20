@@ -6,7 +6,7 @@
  *   LEGALIZE_API_KEY=leg_... npx tsx examples/list_laws.ts es ley_organica
  */
 
-import { Legalize } from "legalize";
+import { Legalize } from "@legalize-dev/sdk";
 
 async function main(): Promise<number> {
   const country = process.argv[2] ?? "es";

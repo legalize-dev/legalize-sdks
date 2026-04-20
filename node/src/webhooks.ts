@@ -15,7 +15,7 @@
  * Usage (Express):
  *
  *   import express from "express";
- *   import { Webhook, WebhookVerificationError } from "legalize";
+ *   import { Webhook, WebhookVerificationError } from "@legalize-dev/sdk";
  *
  *   app.post("/webhooks/legalize",
  *     express.raw({ type: "application/json" }),

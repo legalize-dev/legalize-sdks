@@ -101,7 +101,7 @@ jobs:
     needs: [verify, test]
     environment:
       name: npm
-      url: https://www.npmjs.com/package/legalize
+      url: https://www.npmjs.com/package/@legalize-dev/sdk
     permissions:
       id-token: write     # sigstore provenance
       contents: read
@@ -121,7 +121,7 @@ jobs:
       - name: Publish (public, with provenance)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --provenance
+        run: npm publish --provenance
 
   release:
     name: Create GitHub release

@@ -20,3 +20,5 @@ venv/
 apikey
 .claude/
 apikeypypi
+npmtoken
+.npmrc

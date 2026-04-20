@@ -92,7 +92,7 @@ export interface RequestOptions {
  *
  * Example:
  *
- *   import { Legalize } from "legalize";
+ *   import { Legalize } from "@legalize-dev/sdk";
  *
  *   const client = new Legalize({ apiKey: "leg_..." });
  *   const countries = await client.countries.list();

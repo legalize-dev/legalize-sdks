@@ -1,8 +1,8 @@
 # Changelog
 
-All notable changes to the `legalize` Node SDK will be documented in
-this file. The format is based on [Keep a Changelog][kac] and this
-project adheres to [Semantic Versioning][semver].
+All notable changes to the `@legalize-dev/sdk` Node SDK will be
+documented in this file. The format is based on [Keep a Changelog][kac]
+and this project adheres to [Semantic Versioning][semver].
 
 [kac]: https://keepachangelog.com/en/1.1.0/
 [semver]: https://semver.org/spec/v2.0.0.html
@@ -13,7 +13,9 @@ project adheres to [Semantic Versioning][semver].
 
 ### Added
 
-- First public release of the Node SDK for the Legalize API.
+- First public release of the Node SDK for the Legalize API, published
+  as [`@legalize-dev/sdk`](https://www.npmjs.com/package/@legalize-dev/sdk)
+  on npm.
 - `Legalize` client with configurable timeout, retry policy, default
   headers, and `fetch` override for tests.
 - Zero-config construction from `LEGALIZE_API_KEY`, `LEGALIZE_BASE_URL`,

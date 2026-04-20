@@ -73,12 +73,12 @@ jobs:
       - name: Smoke-test tarball
         run: |
           npm pack
-          TARBALL=$(ls legalize-*.tgz)
+          TARBALL=$(ls legalize-dev-sdk-*.tgz)
           mkdir /tmp/smoke && cd /tmp/smoke
           npm init -y >/dev/null
           npm install "$GITHUB_WORKSPACE/node/$TARBALL"
-          node -e "const { Legalize } = require('legalize'); if (!Legalize) process.exit(1);"
+          node -e "const { Legalize } = require('@legalize-dev/sdk'); if (!Legalize) process.exit(1);"
       - uses: actions/upload-artifact@v4
         with:
           name: node-pack
-          path: node/legalize-*.tgz
+          path: node/legalize-dev-sdk-*.tgz
