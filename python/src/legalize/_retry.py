@@ -6,11 +6,11 @@ Retries happen on:
 - HTTP 500, 502, 503, 504 (transient server issues)
 
 Retries do NOT happen on:
-- 4xx other than 429 (caller error, retrying won't help)
-- Any status if the method is not in the safe set and the server did
-  NOT explicitly return Retry-After. Default safe set covers all
-  current SDK methods (all GETs plus webhook test/retry which are
-  idempotent in practice).
+- 4xx other than 429 (caller error, retrying won't help).
+- Non-idempotent HTTP methods (POST, PATCH) unless the caller opts in.
+  Blindly retrying a POST can create duplicate resources — e.g. two
+  webhook endpoints, two delivery retries. Safe set is
+  ``{GET, HEAD, OPTIONS, PUT, DELETE}``.
 
 The ``Retry-After`` header wins when present. Otherwise we use
 exponential backoff with full jitter, capped at ``max_delay``.
@@ -30,6 +30,13 @@ DEFAULT_BACKOFF_FACTOR = 2.0
 
 RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
 
+# HTTP methods the SDK retries by default. POST and PATCH are NOT in
+# this set because retrying them can duplicate server-side effects
+# (e.g. two webhook endpoints from one webhooks.create call). Callers
+# that know a specific POST is idempotent can opt in via
+# ``RetryPolicy(retry_non_idempotent=True)``.
+IDEMPOTENT_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "PUT", "DELETE"})
+
 
 @dataclass(frozen=True)
 class RetryPolicy:
@@ -43,18 +50,32 @@ class RetryPolicy:
             there is no ``Retry-After`` header.
         max_delay: cap on any single retry delay in seconds.
         backoff_factor: multiplier applied to the delay on each retry.
+        retry_non_idempotent: when ``False`` (default), POST and PATCH
+            are never retried — even on 429/5xx — because the server
+            may have already applied the write. Opt in per policy if
+            the target endpoint is known to be idempotent.
     """
 
     max_retries: int = DEFAULT_MAX_RETRIES
     initial_delay: float = DEFAULT_INITIAL_DELAY
     max_delay: float = DEFAULT_MAX_DELAY
     backoff_factor: float = DEFAULT_BACKOFF_FACTOR
+    retry_non_idempotent: bool = False
 
-    def should_retry(self, attempt: int, *, status: int | None) -> bool:
+    def should_retry(
+        self,
+        attempt: int,
+        *,
+        status: int | None,
+        method: str = "GET",
+    ) -> bool:
         if attempt >= self.max_retries:
             return False
+        if not self.retry_non_idempotent and method.upper() not in IDEMPOTENT_METHODS:
+            return False
         if status is None:
-            # Network error — always retry up to the limit.
+            # Network error — retry up to the limit, still respecting
+            # the idempotency gate above.
             return True
         return status in RETRY_STATUSES
 
@@ -120,6 +141,7 @@ __all__ = [
     "DEFAULT_INITIAL_DELAY",
     "DEFAULT_MAX_DELAY",
     "DEFAULT_MAX_RETRIES",
+    "IDEMPOTENT_METHODS",
     "RETRY_STATUSES",
     "RetryPolicy",
     "parse_retry_after",

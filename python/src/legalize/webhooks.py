@@ -133,7 +133,7 @@ class Webhook:
             WebhookVerificationError: on any verification failure.
         """
         if not sig_header or not timestamp or not secret:
-            raise WebhookVerificationError("verification failed")
+            raise WebhookVerificationError(reason="missing_header")
 
         payload_bytes = payload.encode() if isinstance(payload, str) else bytes(payload)
 
@@ -141,12 +141,12 @@ class Webhook:
         try:
             ts_int = int(timestamp)
         except (TypeError, ValueError) as exc:
-            raise WebhookVerificationError("verification failed") from exc
+            raise WebhookVerificationError(reason="bad_timestamp") from exc
 
         tol = cls.TOLERANCE if tolerance is None else tolerance
         reference = time.time() if now is None else now
         if abs(reference - ts_int) > tol:
-            raise WebhookVerificationError("verification failed")
+            raise WebhookVerificationError(reason="timestamp_outside_tolerance")
 
         # ---- signature check --------------------------------------------
         expected = cls.compute_signature(secret, payload_bytes, timestamp)
@@ -156,18 +156,18 @@ class Webhook:
 
         candidate_hexes = _extract_scheme_hexes(sig_header)
         if not candidate_hexes:
-            raise WebhookVerificationError("verification failed")
+            raise WebhookVerificationError(reason="no_valid_signature")
 
         if not any(hmac.compare_digest(expected_hex, candidate) for candidate in candidate_hexes):
-            raise WebhookVerificationError("verification failed")
+            raise WebhookVerificationError(reason="bad_signature")
 
         # ---- parse payload ----------------------------------------------
         try:
             parsed = json.loads(payload_bytes.decode())
         except (UnicodeDecodeError, ValueError) as exc:
-            raise WebhookVerificationError("verification failed") from exc
+            raise WebhookVerificationError(reason="bad_signature") from exc
         if not isinstance(parsed, dict):
-            raise WebhookVerificationError("verification failed")
+            raise WebhookVerificationError(reason="bad_signature")
         return WebhookEvent.from_payload(parsed)
 
 
