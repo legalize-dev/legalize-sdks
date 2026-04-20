@@ -8,7 +8,7 @@ const (
 	DefaultBaseURL    = "https://legalize.dev"
 	DefaultAPIVersion = "v1"
 
-	envAPIKey     = "LEGALIZE_API_KEY"
+	envAPIKey     = "LEGALIZE_API_KEY" //nolint:gosec // this is an env var name, not a credential
 	envBaseURL    = "LEGALIZE_BASE_URL"
 	envAPIVersion = "LEGALIZE_API_VERSION"
 

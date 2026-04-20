@@ -18,7 +18,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	page, err := client.Laws().List(context.Background(), "es", &legalize.LawsListOptions{
 		PerPage: legalize.Int(10),

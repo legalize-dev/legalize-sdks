@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-// LegalizeError is the sealed interface that every SDK-raised error
+// Error is the sealed interface that every SDK-raised error
 // satisfies. The unexported legalizeError method prevents callers
 // outside this package from forging the interface, which keeps
 // errors.As checks honest.
-type LegalizeError interface {
+type Error interface {
 	error
 	legalizeError()
 }
@@ -162,7 +162,7 @@ func (e *WebhookVerificationError) Error() string {
 func (e *WebhookVerificationError) legalizeError() { _ = e }
 
 // ErrorFromResponse inspects a non-2xx *http.Response plus its
-// already-read body and returns the most specific LegalizeError
+// already-read body and returns the most specific Error
 // subtype. The response is kept on the returned APIError so callers
 // can still read headers off it.
 func ErrorFromResponse(resp *http.Response, body []byte) error {

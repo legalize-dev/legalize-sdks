@@ -115,7 +115,7 @@ case err != nil:
 The error tree:
 
 ```
-LegalizeError
+Error
 ├── APIError
 │   ├── AuthenticationError       401
 │   ├── ForbiddenError            403

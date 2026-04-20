@@ -35,7 +35,7 @@ func ExampleClient_laws() {
 	// Spin up a test server so the example is runnable without
 	// hitting the real API.
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		fmt.Fprint(w, `{"country":"es","total":1,"page":1,"per_page":1,
+		_, _ = fmt.Fprint(w, `{"country":"es","total":1,"page":1,"per_page":1,
 			"results":[{"id":"BOE-A-2025-0001","title":"Ley de ejemplo","country":"es","law_type":"ley"}]}`)
 	}))
 	defer srv.Close()
@@ -65,7 +65,7 @@ func ExampleClient_laws() {
 func ExampleClient_errorHandling() {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(404)
-		fmt.Fprint(w, `{"detail":"law not found"}`)
+		_, _ = fmt.Fprint(w, `{"detail":"law not found"}`)
 	}))
 	defer srv.Close()
 

@@ -54,7 +54,7 @@
 //	    time.Sleep(rle.RetryAfter)
 //	}
 //
-// All typed errors implement the unexported LegalizeError marker and
+// All typed errors implement the unexported Error marker and
 // expose APIError fields (status code, code, message, body,
 // request id).
 //

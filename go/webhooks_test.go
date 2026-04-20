@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const testSecret = "whsec_test_secret_abc123"
+const testSecret = "whsec_test_secret_abc123" //nolint:gosec // test fixture, not a real secret
 
 func goodPayload(t *testing.T) []byte {
 	t.Helper()

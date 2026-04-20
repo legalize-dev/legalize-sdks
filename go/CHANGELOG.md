@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the sealed error interface from `LegalizeError` to `Error`
+  to avoid the `legalize.LegalizeError` stutter (revive). Pre-release
+  rename; no published consumers were affected.
+
 ## [0.1.0] — 2026-04-20
 
 ### Added
@@ -21,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     `Stats`, `Webhooks`.
 - Paginated iterators: `LawsIter`, `ReformsIter`, plus `Iter` and
   `SearchIter` helpers on the laws service.
-- Typed error tree rooted at `LegalizeError`, with `errors.As`-friendly
+- Typed error tree rooted at `Error`, with `errors.As`-friendly
   `AuthenticationError`, `ForbiddenError`, `NotFoundError`,
   `InvalidRequestError`, `ValidationError`, `RateLimitError`,
   `ServerError`, `ServiceUnavailableError`, `APIConnectionError`,

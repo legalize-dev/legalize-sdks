@@ -14,7 +14,7 @@ type WebhooksService struct {
 	client *Client
 }
 
-// CreateOptions is the body of webhooks.Create.
+// WebhookCreateOptions is the body of webhooks.Create.
 type WebhookCreateOptions struct {
 	URL         string
 	EventTypes  []string

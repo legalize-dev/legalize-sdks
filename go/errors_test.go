@@ -167,8 +167,8 @@ func TestTimeoutError_UnwrapsCause(t *testing.T) {
 }
 
 func TestLegalizeErrorInterface_MarkerPreventsForgery(t *testing.T) {
-	// Smoke: our typed errors implement LegalizeError.
-	var le LegalizeError = &APIError{}
+	// Smoke: our typed errors implement the Error interface.
+	var le Error = &APIError{}
 	_ = le
 	le = &AuthenticationError{APIError: &APIError{}}
 	_ = le

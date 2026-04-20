@@ -442,16 +442,17 @@ func TestLawsIter_Integration(t *testing.T) {
 		// Two pages of 2 items each, then empty — total=3.
 		var items []LawSearchResult
 		total := 3
-		if page == 1 {
+		switch page {
+		case 1:
 			items = []LawSearchResult{
 				{ID: "a", Title: "t", Country: "es", LawType: "ley"},
 				{ID: "b", Title: "t", Country: "es", LawType: "ley"},
 			}
-		} else if page == 2 {
+		case 2:
 			items = []LawSearchResult{
 				{ID: "c", Title: "t", Country: "es", LawType: "ley"},
 			}
-		} else {
+		default:
 			items = nil
 		}
 		_ = json.NewEncoder(w).Encode(PaginatedLaws{Country: "es", Total: total, Page: page, PerPage: 2, Results: items})

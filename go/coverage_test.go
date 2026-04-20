@@ -443,8 +443,7 @@ func TestReformsIter_ClampsBatch(t *testing.T) {
 func TestSendWithRetry_RetriesTransportOnGET(t *testing.T) {
 	var calls int
 	// Use a TCP listener we can accept/reject selectively.
-	var srv *httptest.Server
-	srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
 		// First call hijacks the connection and closes it to simulate a transport error.
 		if calls == 1 {

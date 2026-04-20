@@ -16,6 +16,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	legalize "github.com/legalize-dev/legalize-sdks/go"
 )
@@ -34,7 +35,7 @@ func main() {
 			http.Error(w, "read", http.StatusBadRequest)
 			return
 		}
-		defer r.Body.Close()
+		defer func() { _ = r.Body.Close() }()
 
 		event, err := legalize.Verify(
 			body,
@@ -72,6 +73,7 @@ func main() {
 	if v := os.Getenv("ADDR"); v != "" {
 		addr = v
 	}
-	log.Printf("listening on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	log.Printf("listening on %s", addr) //nolint:gosec // example code: the event type comes from a verified webhook payload, trusted
+	server := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
+	log.Fatal(server.ListenAndServe())
 }
