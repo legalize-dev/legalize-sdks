@@ -10,7 +10,7 @@ Official client libraries for the [Legalize API](https://legalize.dev/api).
 |---|---|---|---|
 | Python | [`legalize`](https://pypi.org/project/legalize/) | [`python/`](python/) | In development |
 | Node / TS | `legalize` (npm) | planned | Not started |
-| Go | `github.com/legalize-dev/legalize-go` | planned | Not started |
+| Go | `github.com/legalize-dev/legalize-sdks/go` | [`go/`](go/) | Not started |
 | curl | — | [`curl/`](curl/) | Planned |
 
 ## Quick start (Python)

@@ -1,0 +1,88 @@
+name: go-ci
+
+# Dormant until the Go SDK lands in `go/`. Once `go/go.mod` exists, the
+# path filter wakes this workflow up automatically.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "go/**"
+      - "openapi-sdk.json"
+      - ".github/workflows/go-ci.yml"
+  pull_request:
+    paths:
+      - "go/**"
+      - "openapi-sdk.json"
+      - ".github/workflows/go-ci.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: go-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: go
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - name: go vet
+        run: go vet ./...
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "::error::Files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: go
+          version: latest
+          args: --timeout=5m
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["1.22", "1.23", "1.24"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: go/go.sum
+      - run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Upload coverage
+        if: matrix.go-version == '1.24'
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: go/coverage.out
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - name: Build
+        run: go build ./...
+      - name: Verify module consistency
+        run: |
+          go mod tidy -diff
+          go mod verify

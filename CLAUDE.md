@@ -93,12 +93,14 @@ Coverage target: 95% (enforced by `pyproject.toml [tool.coverage.report] fail_un
 | `python-publish.yml` | Tag `python-v*` push | Verify → test → build → publish to PyPI (Trusted Publishing + PEP 740 attestations) → GitHub release |
 | `node-ci.yml` | PR + push touching `node/**` | **Dormant** until the Node SDK lands in `node/` |
 | `node-publish.yml` | Tag `node-v*` push | **Dormant** — mirror of the Python flow, publishes to npm with `--provenance` |
+| `go-ci.yml` | PR + push touching `go/**` | **Dormant** until the Go SDK lands in `go/` |
+| `go-publish.yml` | Tag `go/v*` push | **Dormant** — Go has no registry; workflow validates tag + CHANGELOG, runs tests, creates GitHub Release. `proxy.golang.org` picks the module up automatically |
 
 Release flow (Python): bump `python/pyproject.toml` + `python/src/legalize/_version.py` + `python/CHANGELOG.md` (add `## [X.Y.Z] — YYYY-MM-DD` section) in one PR, land, then push tag `python-vX.Y.Z`. The publish workflow fails closed if any of the three version sources disagree or if CHANGELOG has no matching section. PyPI upload runs via OIDC Trusted Publishing (no long-lived tokens); artifacts carry PEP 740 attestations; a GitHub Release is opened with the CHANGELOG section as notes.
 
 One-time PyPI setup before the first run of the hardened workflow: add a Trusted Publisher on PyPI (repo `legalize-dev/legalize-sdks`, workflow `python-publish.yml`, environment `pypi`). The fallback `PYPI_API_TOKEN` secret can be deleted afterwards.
 
-Per `CONTRIBUTING.md`, each SDK in the monorepo follows the same pattern (`<lang>-ci.yml` + `<lang>-publish.yml`, tag `<lang>-vX.Y.Z`). The Go SDK is the exception — it lives in `legalize-dev/legalize-go` because Go module paths must match the repo root. SDK versions track the SDK, not the API; API version is negotiated per-request via the `Legalize-API-Version` header.
+Per `CONTRIBUTING.md`, each SDK in the monorepo follows the same pattern (`<lang>-ci.yml` + `<lang>-publish.yml`). Tag conventions: `python-vX.Y.Z`, `node-vX.Y.Z`, and `go/vX.Y.Z` (Go uses a slash prefix because it is a Go submodule and the module resolver requires the subdirectory path in the tag — `github.com/legalize-dev/legalize-sdks/go@vX.Y.Z`). SDK versions track the SDK, not the API; API version is negotiated per-request via the `Legalize-API-Version` header.
 
 Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions and for the Python dev/runtime stacks (pydantic majors are held back for manual migration). The npm block is commented out and should be uncommented when `node/package.json` exists.
 

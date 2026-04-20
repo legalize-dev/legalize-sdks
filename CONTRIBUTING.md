@@ -9,16 +9,19 @@ sdk/
 ├── scripts/               ← helpers to fetch + filter the spec, codegen
 ├── python/                ← Python SDK (PyPI: legalize)
 ├── node/                  ← reserved for TypeScript SDK (npm: legalize)
+├── go/                    ← reserved for Go SDK (github.com/legalize-dev/legalize-sdks/go)
 └── curl/                  ← curl snippets and shell helpers
 ```
 
 Each language directory is self-contained: its own build/test/publish
 pipeline. The monorepo exists so all SDKs stay in lockstep with the
-shared OpenAPI spec.
+shared OpenAPI spec — every SDK is regenerated from the same
+`openapi-sdk.json`.
 
-The Go SDK lives in its own repo — `github.com/legalize-dev/legalize-go` —
-because Go's module resolver expects the import path to match the repo
-root. Changes to the Go SDK happen there, not here.
+The Go SDK is a Go submodule at `sdk/go/`. Its import path is
+`github.com/legalize-dev/legalize-sdks/go` (with `package legalize`
+inside, so callers use `legalize.Client{}`). Submodule tags must be
+prefixed with the subdirectory — see the release process below.
 
 ## Python development
 
@@ -49,27 +52,25 @@ pytest --cov=legalize --cov-fail-under=95
 
 CI runs this daily; if the spec changed a PR is opened automatically.
 
-## Adding a new language (to this monorepo)
+## Adding a new language
 
 1. Create `sdk/<lang>/` with its own build manifest.
 2. Add a CI workflow under `.github/workflows/<lang>-ci.yml`
-   (the `node-ci.yml` template is a working reference).
-3. Add a publish workflow `<lang>-publish.yml` triggered on tags like
-   `<lang>-vX.Y.Z` (the `node-publish.yml` template mirrors `python-publish.yml`).
+   (the `node-ci.yml` and `go-ci.yml` templates are working references).
+3. Add a publish workflow `<lang>-publish.yml` triggered on the
+   language's tag convention.
 4. Mirror the coverage + test expectations of the Python SDK.
 5. Add the new manifest to `.github/dependabot.yml`.
-
-Go does not follow this pattern — it lives in a separate repo so its
-module path matches the repo root.
 
 ## Release process
 
 Each SDK is versioned independently and ships through its own publish
-workflow. Tag format:
+workflow. Tag format per language (Go's uses `/` because it is a
+submodule and Go's module resolver requires the subdirectory prefix):
 
 - `python-v1.2.3` → `.github/workflows/python-publish.yml` → PyPI (`legalize==1.2.3`)
 - `node-v1.2.3`   → `.github/workflows/node-publish.yml`   → npm  (`legalize@1.2.3`)
-- `v1.2.3`        → in the `legalize-go` repo — no publish needed, Go resolves modules directly from the tagged commit.
+- `go/v1.2.3`     → `.github/workflows/go-publish.yml`     → Go modules (`github.com/legalize-dev/legalize-sdks/go@v1.2.3`, resolved by `proxy.golang.org` directly from the tagged commit — no registry).
 
 SDK versions track the SDK itself, not the API version. The API version
 is negotiated via the `Legalize-API-Version` header per request.
@@ -98,6 +99,12 @@ The `python-publish.yml` workflow then:
 
 The `node-publish.yml` workflow follows the same pattern and publishes
 with `npm publish --provenance` for sigstore-verifiable builds.
+
+The `go-publish.yml` workflow skips the "publish" step (Go has no
+registry — `proxy.golang.org` caches modules straight from the tagged
+commit) and instead just creates the GitHub Release with CHANGELOG
+notes after CI passes. Tags for the Go submodule must be
+`go/vX.Y.Z`, not `go-vX.Y.Z`.
 
 ### One-time PyPI Trusted Publishing setup
 

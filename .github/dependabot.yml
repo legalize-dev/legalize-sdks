@@ -55,3 +55,19 @@ updates:
   #     dev:
   #       dependency-type: development
   #       update-types: ["minor", "patch"]
+
+  # When the Go SDK lands in `/go`, uncomment this block.
+  # - package-ecosystem: gomod
+  #   directory: /go
+  #   schedule:
+  #     interval: weekly
+  #     day: monday
+  #     time: "07:00"
+  #     timezone: Europe/Madrid
+  #   open-pull-requests-limit: 5
+  #   commit-message:
+  #     prefix: "chore(go)"
+  #   groups:
+  #     deps:
+  #       patterns: ["*"]
+  #       update-types: ["minor", "patch"]

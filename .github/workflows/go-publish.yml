@@ -1,0 +1,112 @@
+name: go-publish
+
+# "Publishes" the Go SDK when a `go/vX.Y.Z` tag is pushed.
+#
+# Go has no registry — proxy.golang.org fetches the module straight
+# from the tagged commit. This workflow therefore does NOT upload any
+# artifact; it validates the tag, re-runs tests, creates a GitHub
+# Release with CHANGELOG notes, and warms proxy.golang.org so the
+# module shows up on pkg.go.dev immediately.
+#
+# Tag format: `go/vX.Y.Z` (NOT `go-vX.Y.Z`). Go's module resolver
+# requires the subdirectory prefix because the module lives in `go/`
+# of a multi-module repo.
+
+on:
+  push:
+    tags: ["go/v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (without the v prefix), e.g. 1.2.3"
+        required: true
+
+concurrency:
+  group: go-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify version + changelog
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        name: Resolve version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Tag format is refs/tags/go/vX.Y.Z, so GITHUB_REF_NAME is "go/vX.Y.Z"
+            TAG="${GITHUB_REF_NAME#go/v}"
+          else
+            TAG="${{ inputs.version }}"
+          fi
+          echo "tag: $TAG"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Verify CHANGELOG entry exists
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! grep -qE "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no ## [${VERSION}] entry"
+            exit 1
+          fi
+
+  test:
+    name: Test (go ${{ matrix.go-version }})
+    runs-on: ubuntu-latest
+    needs: verify
+    strategy:
+      fail-fast: true
+      matrix:
+        go-version: ["1.22", "1.23", "1.24"]
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache-dependency-path: go/go.sum
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  release:
+    name: Create GitHub release + warm proxy
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract CHANGELOG section
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { capture=1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' go/CHANGELOG.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "Go SDK v${VERSION} — see go/CHANGELOG.md for details." > /tmp/notes.md
+          fi
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          gh release create "go/v${VERSION}" \
+            --title "Go SDK v${VERSION}" \
+            --notes-file /tmp/notes.md \
+            --verify-tag
+      - name: Warm proxy.golang.org
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          # Touching the module URL on the Go proxy forces it to ingest
+          # the new version; pkg.go.dev then picks it up shortly after.
+          curl -fsS "https://proxy.golang.org/github.com/legalize-dev/legalize-sdks/go/@v/v${VERSION}.info" || true
