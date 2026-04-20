@@ -1,0 +1,32 @@
+name: go-integration
+
+on:
+  schedule:
+    - cron: "30 5 * * *"  # daily at 05:30 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: go-integration
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    if: github.repository == 'legalize-dev/legalize-sdks'
+    defaults:
+      run:
+        working-directory: go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - name: Run integration tests against prod (read-only)
+        env:
+          LEGALIZE_API_KEY: ${{ secrets.LEGALIZE_API_KEY }}
+          LEGALIZE_BASE_URL: https://legalize.dev
+        run: go test -tags=integration -v -race -timeout 5m ./...

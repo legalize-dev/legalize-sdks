@@ -1,0 +1,34 @@
+name: node-integration
+
+on:
+  schedule:
+    - cron: "15 5 * * *"  # daily at 05:15 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: node-integration
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    if: github.repository == 'legalize-dev/legalize-sdks'
+    defaults:
+      run:
+        working-directory: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+      - run: npm ci
+      - name: Run integration tests against prod (read-only)
+        env:
+          LEGALIZE_API_KEY: ${{ secrets.LEGALIZE_API_KEY }}
+          LEGALIZE_BASE_URL: https://legalize.dev
+        run: npx vitest run tests/integration
