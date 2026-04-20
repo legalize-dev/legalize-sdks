@@ -195,10 +195,27 @@ class APITimeoutError(APIConnectionError):
 class WebhookVerificationError(LegalizeError):
     """Raised by ``Webhook.verify`` when the signature is invalid.
 
-    The exception message is deliberately generic — do not leak which
-    check failed (timestamp format vs. signature mismatch vs. replay)
-    to the caller, since that can help an attacker iterate.
+    The public exception ``message`` is deliberately generic — do not
+    surface it back to the webhook sender, since that helps attackers
+    iterate. For server-side logging and metrics, inspect
+    :attr:`reason`, which carries one of the machine-readable codes
+    enumerated in :data:`WebhookVerificationError.REASONS`.
     """
+
+    # The exhaustive set of reason codes. Same set and spellings as in
+    # the Node (@legalize-dev/sdk) and Go SDKs so cross-language
+    # metrics line up.
+    REASONS: tuple[str, ...] = (
+        "missing_header",
+        "bad_timestamp",
+        "timestamp_outside_tolerance",
+        "no_valid_signature",
+        "bad_signature",
+    )
+
+    def __init__(self, message: str = "verification failed", *, reason: str | None = None) -> None:
+        super().__init__(message)
+        self.reason = reason
 
 
 # --- internal parsing ----------------------------------------------------

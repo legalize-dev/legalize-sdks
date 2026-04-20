@@ -8,8 +8,8 @@ sdk/
 ├── openapi-sdk.json       ← filtered, SDK-only subset (generated)
 ├── scripts/               ← helpers to fetch + filter the spec, codegen
 ├── python/                ← Python SDK (PyPI: legalize)
-├── node/                  ← reserved for TypeScript SDK (npm: legalize)
-├── go/                    ← reserved for Go SDK (github.com/legalize-dev/legalize-sdks/go)
+├── node/                  ← Node / TypeScript SDK (npm: @legalize-dev/sdk)
+├── go/                    ← Go SDK (github.com/legalize-dev/legalize-sdks/go)
 └── curl/                  ← curl snippets and shell helpers
 ```
 
@@ -76,7 +76,7 @@ workflow. Tag format per language (Go's uses `/` because it is a
 submodule and Go's module resolver requires the subdirectory prefix):
 
 - `python-v1.2.3` → `.github/workflows/python-publish.yml` → PyPI (`legalize==1.2.3`)
-- `node-v1.2.3`   → `.github/workflows/node-publish.yml`   → npm  (`legalize@1.2.3`)
+- `node-v1.2.3`   → `.github/workflows/node-publish.yml`   → npm  (`@legalize-dev/sdk@1.2.3`)
 - `go/v1.2.3`     → `.github/workflows/go-publish.yml`     → Go modules (`github.com/legalize-dev/legalize-sdks/go@v1.2.3`, resolved by `proxy.golang.org` directly from the tagged commit — no registry).
 
 SDK versions track the SDK itself, not the API version. The API version

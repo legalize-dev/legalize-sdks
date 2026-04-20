@@ -1,7 +1,8 @@
 name: go-ci
 
-# Dormant until the Go SDK lands in `go/`. Once `go/go.mod` exists, the
-# path filter wakes this workflow up automatically.
+# vet + gofmt + golangci-lint + matrix `go test -race` (1.22, 1.23,
+# 1.24) for the Go submodule at `go/` (published as
+# `github.com/legalize-dev/legalize-sdks/go`).
 
 on:
   push:

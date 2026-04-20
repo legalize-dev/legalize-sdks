@@ -286,7 +286,7 @@ class Legalize(_BaseClient):
         request = self._build_request(
             method, path, params=params, json=json, extra_headers=extra_headers
         )
-        response = self._send_with_retry(request)
+        response = self._send_with_retry(request, method=method.upper())
         self._last_response = response
         if response.status_code == 204 or not response.content:
             return None
@@ -300,14 +300,14 @@ class Legalize(_BaseClient):
                 response=response,
             ) from exc
 
-    def _send_with_retry(self, request: httpx.Request) -> httpx.Response:
+    def _send_with_retry(self, request: httpx.Request, *, method: str = "GET") -> httpx.Response:
         last_exc: Exception | None = None
         attempt = 0
         while True:
             try:
                 response = self._http.send(request)
             except Exception as exc:
-                if not self._retry.should_retry(attempt, status=None):
+                if not self._retry.should_retry(attempt, status=None, method=method):
                     _raise_for_transport_error(exc)
                     raise
                 last_exc = exc
@@ -319,7 +319,7 @@ class Legalize(_BaseClient):
             if 200 <= response.status_code < 300:
                 return response
 
-            if not self._retry.should_retry(attempt, status=response.status_code):
+            if not self._retry.should_retry(attempt, status=response.status_code, method=method):
                 # Expose the failing response so callers can inspect
                 # rate-limit headers / request IDs before raising.
                 self._last_response = response
@@ -436,12 +436,13 @@ class AsyncLegalize(_BaseClient):
         request = self._build_request(
             method, path, params=params, json=json, extra_headers=extra_headers
         )
+        method_upper = method.upper()
         attempt = 0
         while True:
             try:
                 response = await self._http.send(request)
             except Exception as exc:
-                if not self._retry.should_retry(attempt, status=None):
+                if not self._retry.should_retry(attempt, status=None, method=method_upper):
                     _raise_for_transport_error(exc)
                     raise
                 delay = self._retry.compute_delay(attempt, retry_after=None)
@@ -463,7 +464,9 @@ class AsyncLegalize(_BaseClient):
                         response=response,
                     ) from exc
 
-            if not self._retry.should_retry(attempt, status=response.status_code):
+            if not self._retry.should_retry(
+                attempt, status=response.status_code, method=method_upper
+            ):
                 # Expose the failing response so callers can inspect
                 # rate-limit headers / request IDs before raising.
                 self._last_response = response

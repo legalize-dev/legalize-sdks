@@ -1,7 +1,7 @@
 name: node-ci
 
-# Dormant until the Node SDK lands in `node/`. Once `node/package.json`
-# exists, the path filter wakes this workflow up automatically.
+# Lint + typecheck + matrix test (Node 20, 22) + tsup build smoke-test
+# for the @legalize-dev/sdk package in `node/`.
 
 on:
   push:
