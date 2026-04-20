@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Environment-variable contract: `Legalize()` with no arguments now
+  works when `LEGALIZE_API_KEY` is set. `LEGALIZE_BASE_URL` and
+  `LEGALIZE_API_VERSION` are also honored, with precedence
+  `explicit arg > env var > built-in default`. Empty-string env vars
+  fall through to the default. The contract is specified in the
+  top-level [`ENVIRONMENT.md`](../ENVIRONMENT.md) and applies to every
+  language SDK.
+
+### Changed
+
+- `base_url` and `api_version` on `Legalize` / `AsyncLegalize` are now
+  keyword-only with default `None` instead of the hardcoded defaults.
+  Existing code that passes values or relies on defaults continues to
+  work unchanged.
+
 ## [0.1.0] — 2026-04-18
 
 Initial public release. Published to PyPI as

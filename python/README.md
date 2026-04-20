@@ -105,11 +105,30 @@ Working Flask and FastAPI receivers in
 
 ## Configuration
 
+### Zero-config (recommended for servers + Kubernetes)
+
+Set the environment and just instantiate:
+
+```bash
+export LEGALIZE_API_KEY=leg_live_...
+# Optional:
+export LEGALIZE_BASE_URL=https://legalize.dev
+export LEGALIZE_API_VERSION=v1
+```
+
+```python
+from legalize import Legalize
+
+client = Legalize()   # picks everything up from the environment
+```
+
+### Explicit
+
 ```python
 from legalize import Legalize, RetryPolicy
 
 client = Legalize(
-    api_key="leg_...",             # or env: LEGALIZE_API_KEY
+    api_key="leg_...",
     base_url="https://legalize.dev",
     api_version="v1",              # negotiated via Legalize-API-Version
     timeout=30.0,
@@ -117,6 +136,10 @@ client = Legalize(
     default_headers={"X-Correlation-Id": "..."},
 )
 ```
+
+Precedence: explicit argument > environment variable > built-in default.
+The full cross-SDK contract is documented in
+[`ENVIRONMENT.md`](https://github.com/legalize-dev/legalize-sdks/blob/main/ENVIRONMENT.md).
 
 Read rate-limit headers from the last response:
 

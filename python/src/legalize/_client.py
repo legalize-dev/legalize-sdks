@@ -72,6 +72,18 @@ def _resolve_api_key(api_key: str | None) -> str:
     return key
 
 
+def _resolve_base_url(base_url: str | None) -> str:
+    if base_url is not None:
+        return base_url
+    return os.environ.get("LEGALIZE_BASE_URL") or DEFAULT_BASE_URL
+
+
+def _resolve_api_version(api_version: str | None) -> str:
+    if api_version is not None:
+        return api_version
+    return os.environ.get("LEGALIZE_API_VERSION") or DEFAULT_API_VERSION
+
+
 def _build_headers(api_key: str, api_version: str, extra: dict[str, str] | None) -> dict[str, str]:
     headers: dict[str, str] = {
         "Authorization": f"Bearer {api_key}",
@@ -102,18 +114,18 @@ class _BaseClient:
         self,
         *,
         api_key: str | None,
-        base_url: str,
-        api_version: str,
+        base_url: str | None,
+        api_version: str | None,
         timeout: float | httpx.Timeout,
         retry: RetryPolicy,
         default_headers: dict[str, str] | None,
     ) -> None:
         self._api_key = _resolve_api_key(api_key)
-        self._base_url = base_url.rstrip("/")
-        self._api_version = api_version
+        self._base_url = _resolve_base_url(base_url).rstrip("/")
+        self._api_version = _resolve_api_version(api_version)
         self._timeout = timeout
         self._retry = retry
-        self._headers = _build_headers(self._api_key, api_version, default_headers)
+        self._headers = _build_headers(self._api_key, self._api_version, default_headers)
 
     # ---- URL building ----------------------------------------------------
 
@@ -197,8 +209,8 @@ class Legalize(_BaseClient):
         self,
         *,
         api_key: str | None = None,
-        base_url: str = DEFAULT_BASE_URL,
-        api_version: str = DEFAULT_API_VERSION,
+        base_url: str | None = None,
+        api_version: str | None = None,
         timeout: float | httpx.Timeout = DEFAULT_TIMEOUT,
         max_retries: int | None = None,
         retry: RetryPolicy | None = None,
@@ -354,8 +366,8 @@ class AsyncLegalize(_BaseClient):
         self,
         *,
         api_key: str | None = None,
-        base_url: str = DEFAULT_BASE_URL,
-        api_version: str = DEFAULT_API_VERSION,
+        base_url: str | None = None,
+        api_version: str | None = None,
         timeout: float | httpx.Timeout = DEFAULT_TIMEOUT,
         max_retries: int | None = None,
         retry: RetryPolicy | None = None,

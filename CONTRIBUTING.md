@@ -61,6 +61,13 @@ CI runs this daily; if the spec changed a PR is opened automatically.
    language's tag convention.
 4. Mirror the coverage + test expectations of the Python SDK.
 5. Add the new manifest to `.github/dependabot.yml`.
+6. **Implement the environment-variable contract in
+   [`ENVIRONMENT.md`](ENVIRONMENT.md).** Every SDK must honor
+   `LEGALIZE_API_KEY`, `LEGALIZE_BASE_URL`, and `LEGALIZE_API_VERSION`
+   with identical precedence rules. Port the test intent of
+   `python/tests/unit/test_env_resolution.py` into the new language's
+   test suite — the test names are the cross-language acceptance
+   criteria for the contract.
 
 ## Release process
 

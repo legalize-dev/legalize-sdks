@@ -70,6 +70,16 @@ Spec + codegen pipeline (run from repo root):
 - `_clean_params` drops `None`, coerces bools to `"true"/"false"`, comma-joins list/tuple params. Pydantic models are **not** accepted as query params — flatten first.
 - `follow_redirects=False` on both transports; the server is not expected to redirect.
 
+### Environment-variable contract
+
+See [`ENVIRONMENT.md`](ENVIRONMENT.md) — canonical cross-SDK spec. Summary:
+
+- `LEGALIZE_API_KEY` (required unless passed explicitly)
+- `LEGALIZE_BASE_URL` (default `https://legalize.dev`)
+- `LEGALIZE_API_VERSION` (default `v1`)
+
+Precedence: explicit arg > env var > default. Empty-string env is treated as unset. Prefix `LEGALIZE_` is mandatory — no short aliases, to avoid clashes with other SDKs in the same pod. `Legalize()` with zero args is a supported zero-config use case. The resolution helpers live in `_client.py` (`_resolve_api_key` / `_resolve_base_url` / `_resolve_api_version`) and are covered by `tests/unit/test_env_resolution.py`. **When the Node and Go SDKs land, they must honor this contract byte-for-byte.**
+
 ## Testing strategy
 
 Unit tests never touch the network. `tests/conftest.py` provides `client`/`aclient` fixtures that plug an `httpx.MockTransport` into the real `Legalize`/`AsyncLegalize` classes, and `retry_client_factory` for tests that need custom retry policies. Test tiers (markers in `pyproject.toml`):
