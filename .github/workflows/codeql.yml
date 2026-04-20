@@ -1,0 +1,53 @@
+name: codeql
+
+# GitHub's semantic static analysis. Findings land in the repo's
+# Security → Code scanning tab, and every PR gets annotated if it
+# introduces a new alert. Free for public repos.
+#
+# The matrix grows as new SDKs land — add a language entry when the
+# Node and Go SDKs ship their first code (Node: "javascript-typescript",
+# Go: "go").
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly full scan catches alerts added to CodeQL's query packs
+    # after they were last run.
+    - cron: "17 6 * * 1"
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, actions]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
