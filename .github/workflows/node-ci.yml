@@ -53,7 +53,7 @@ jobs:
           cache: npm
           cache-dependency-path: node/package-lock.json
       - run: npm ci
-      - run: npm test -- --coverage
+      - run: npm test
 
   build:
     runs-on: ubuntu-latest
