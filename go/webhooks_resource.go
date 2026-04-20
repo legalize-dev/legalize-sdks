@@ -25,12 +25,7 @@ type WebhookCreateOptions struct {
 // Create registers a new webhook endpoint. Returns the endpoint
 // payload including the one-time signing secret.
 func (s *WebhooksService) Create(ctx context.Context, opts WebhookCreateOptions) (WebhookEndpoint, error) {
-	body := WebhookEndpointCreate{
-		URL:         opts.URL,
-		EventTypes:  opts.EventTypes,
-		Countries:   opts.Countries,
-		Description: opts.Description,
-	}
+	body := WebhookEndpointCreate(opts)
 	var out WebhookEndpoint
 	if err := s.client.requestJSON(ctx, http.MethodPost, API+"/webhooks",
 		[]RequestOption{WithJSONBody(body)}, &out); err != nil {
@@ -70,13 +65,7 @@ type WebhookUpdateOptions struct {
 // Update patches an existing endpoint. Only non-nil fields on opts
 // are sent, matching the server's partial-update semantics.
 func (s *WebhooksService) Update(ctx context.Context, endpointID int, opts WebhookUpdateOptions) (WebhookEndpoint, error) {
-	body := WebhookEndpointUpdate{
-		URL:         opts.URL,
-		EventTypes:  opts.EventTypes,
-		Countries:   opts.Countries,
-		Description: opts.Description,
-		Enabled:     opts.Enabled,
-	}
+	body := WebhookEndpointUpdate(opts)
 	var out WebhookEndpoint
 	if err := s.client.requestJSON(ctx, http.MethodPatch,
 		API+"/webhooks/"+strconv.Itoa(endpointID),

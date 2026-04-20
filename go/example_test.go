@@ -21,7 +21,7 @@ func Example() {
 		fmt.Println("error:", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	_ = client.BaseURL() // https://legalize.dev
 	fmt.Println(client.APIVersion())
@@ -48,7 +48,7 @@ func ExampleClient_laws() {
 		fmt.Println("error:", err)
 		return
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	page, err := client.Laws().List(context.Background(), "es", &legalize.LawsListOptions{
 		PerPage: legalize.Int(1),
@@ -74,7 +74,7 @@ func ExampleClient_errorHandling() {
 		legalize.WithBaseURL(srv.URL),
 		legalize.WithMaxRetries(0),
 	)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	_, err := client.Laws().Retrieve(context.Background(), "es", "MISSING")
 	var nf *legalize.NotFoundError
