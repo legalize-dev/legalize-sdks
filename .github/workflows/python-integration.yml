@@ -9,6 +9,9 @@ concurrency:
   group: python-integration
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   integration:
     runs-on: ubuntu-latest

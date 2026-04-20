@@ -25,6 +25,9 @@ concurrency:
   group: go-publish-${{ github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify version + changelog

@@ -21,6 +21,9 @@ concurrency:
   group: node-ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 defaults:
   run:
     working-directory: node
