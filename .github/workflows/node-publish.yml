@@ -45,8 +45,8 @@ jobs:
       run:
         working-directory: node
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
       - id: version
@@ -85,8 +85,8 @@ jobs:
       run:
         working-directory: node
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -110,8 +110,8 @@ jobs:
       run:
         working-directory: node
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: "22"
           registry-url: https://registry.npmjs.org/
@@ -132,7 +132,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Extract CHANGELOG section
         run: |
           VERSION="${{ needs.verify.outputs.version }}"
