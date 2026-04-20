@@ -1,0 +1,151 @@
+name: node-publish
+
+# Publishes `legalize` to npm when a `node-vX.Y.Z` tag is pushed.
+# Dormant until the Node SDK exists in `node/`.
+#
+# One-time npm setup:
+#   1. Create a granular access token scoped to the `legalize` package
+#      with "Publish" permission (npmjs.com → Access Tokens).
+#   2. Add it to the GitHub repo as the `NPM_TOKEN` secret.
+#   3. Attach this repo as a "Trusted Publisher" on npm once the beta is
+#      GA — at that point, drop the token and rely on OIDC only.
+#
+# Published packages carry sigstore provenance statements
+# (`--provenance`), which link the tarball to this exact workflow run.
+#
+# Release flow mirrors Python:
+#   1. Bump node/package.json.
+#   2. Add a CHANGELOG entry.
+#   3. Tag `node-vX.Y.Z` and push.
+
+on:
+  push:
+    tags: ["node-v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (without the node-v prefix)"
+        required: true
+
+concurrency:
+  group: node-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify version + changelog
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    defaults:
+      run:
+        working-directory: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - id: version
+        name: Cross-check package.json vs tag
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#node-v}"
+          else
+            TAG="${{ inputs.version }}"
+          fi
+          PKG=$(node -p "require('./package.json').version")
+          echo "tag:          $TAG"
+          echo "package.json: $PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Version mismatch — tag=$TAG package.json=$PKG"
+            exit 1
+          fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Verify CHANGELOG entry exists
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! grep -qE "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no ## [${VERSION}] entry"
+            exit 1
+          fi
+
+  test:
+    name: Test (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: verify
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: ["20", "22"]
+    defaults:
+      run:
+        working-directory: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/legalize
+    permissions:
+      id-token: write     # sigstore provenance
+      contents: read
+    defaults:
+      run:
+        working-directory: node
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+          cache-dependency-path: node/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Publish (public, with provenance)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --provenance
+
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    needs: [verify, publish]
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract CHANGELOG section
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { capture=1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' node/CHANGELOG.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "Node SDK v${VERSION} — see CHANGELOG.md for details." > /tmp/notes.md
+          fi
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          gh release create "node-v${VERSION}" \
+            --title "Node SDK v${VERSION}" \
+            --notes-file /tmp/notes.md \
+            --verify-tag

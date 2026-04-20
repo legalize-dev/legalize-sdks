@@ -1,16 +1,44 @@
 name: python-publish
 
+# Publishes `legalize` to PyPI when a `python-vX.Y.Z` tag is pushed.
+#
+# One-time PyPI setup (Trusted Publishing, no tokens):
+#   https://pypi.org/manage/project/legalize/settings/publishing/
+#     → Add a new trusted publisher (GitHub Actions)
+#       owner:       legalize-dev
+#       repository:  legalize-sdks
+#       workflow:    python-publish.yml
+#       environment: pypi
+#
+# Release flow:
+#   1. Bump python/pyproject.toml, python/src/legalize/_version.py,
+#      and python/CHANGELOG.md (add a `## [X.Y.Z] — YYYY-MM-DD` section).
+#   2. Land the PR to `main`.
+#   3. `git tag python-vX.Y.Z && git push origin python-vX.Y.Z`.
+#
+# The workflow aborts if any of the three version sources disagree or if
+# CHANGELOG has no entry for the tag. PyPI publishing uses OIDC (no
+# long-lived tokens); the uploaded artifacts carry PEP 740 attestations.
+
 on:
   push:
     tags: ["python-v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (without the python-v prefix), e.g. 1.2.3"
+        required: true
+
+concurrency:
+  group: python-publish-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  verify:
+    name: Verify version + changelog
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/legalize
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     defaults:
       run:
         working-directory: python
@@ -19,29 +47,139 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Verify tag matches pyproject version
-        if: github.event_name == 'push'
+      - id: version
+        name: Resolve and cross-check version
         run: |
-          VERSION=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
-          TAG=${GITHUB_REF_NAME#python-v}
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "Tag $TAG does not match pyproject version $VERSION"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG="${GITHUB_REF_NAME#python-v}"
+          else
+            TAG="${{ inputs.version }}"
+          fi
+          PYPROJECT=$(python -c "import tomllib, pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          MODULE=$(sed -nE 's/^__version__ = "(.+)"$/\1/p' src/legalize/_version.py)
+          echo "tag:        $TAG"
+          echo "pyproject:  $PYPROJECT"
+          echo "_version:   $MODULE"
+          if [ "$TAG" != "$PYPROJECT" ] || [ "$TAG" != "$MODULE" ]; then
+            echo "::error::Version mismatch — tag=$TAG pyproject=$PYPROJECT _version=$MODULE"
             exit 1
           fi
-      - name: Build
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+      - name: Verify CHANGELOG entry exists
         run: |
-          pip install build
-          python -m build
-      # Uses a PyPI API token for the first release. Once the project
-      # exists on PyPI, migrate to Trusted Publishing:
-      #   1. pypi.org/manage/project/legalize/settings/publishing/
-      #      → Add a new trusted publisher (GitHub Actions)
-      #      → repo: legalize-dev/legalize-sdks, workflow: python-publish.yml,
-      #        environment: pypi
-      #   2. Replace the `password:` line below with `id-token: write` at
-      #      the job level and drop the `password:` arg here.
-      - name: Publish to PyPI
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! grep -qE "^## \[${VERSION}\]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no ## [${VERSION}] entry"
+            exit 1
+          fi
+
+  test:
+    name: Test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    needs: verify
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.10", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - name: mypy --strict
+        if: matrix.python-version == '3.12'
+        run: mypy --strict src
+      - name: pytest (offline tiers)
+        run: pytest -m "not integration" --cov=legalize --cov-fail-under=95
+
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    needs: [verify, test]
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - name: Smoke-test wheel
+        run: |
+          python -m venv /tmp/smoke
+          /tmp/smoke/bin/pip install dist/legalize-*.whl
+          /tmp/smoke/bin/python -c "
+          import legalize
+          assert legalize.__version__ == '${{ needs.verify.outputs.version }}', legalize.__version__
+          assert legalize.Legalize and legalize.AsyncLegalize and legalize.Webhook
+          "
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: python/dist/
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [verify, build]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/legalize
+    permissions:
+      id-token: write        # OIDC — PyPI Trusted Publishing
+      attestations: write    # PEP 740 artifact attestations
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - name: Publish (Trusted Publishing + attestations)
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: python/dist/
-          password: ${{ secrets.PYPI_API_TOKEN }}
+          attestations: true
+
+  release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    needs: [verify, publish]
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+      - name: Extract CHANGELOG section
+        id: notes
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { capture=1; next }
+            capture && /^## \[/ { exit }
+            capture { print }
+          ' python/CHANGELOG.md > /tmp/notes.md
+          if [ ! -s /tmp/notes.md ]; then
+            echo "Python SDK v${VERSION} — see CHANGELOG.md for details." > /tmp/notes.md
+          fi
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ needs.verify.outputs.version }}"
+          gh release create "python-v${VERSION}" \
+            --title "Python SDK v${VERSION}" \
+            --notes-file /tmp/notes.md \
+            --verify-tag \
+            dist/*

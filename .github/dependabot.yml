@@ -1,0 +1,57 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(ci)"
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directory: /python
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(python)"
+    groups:
+      runtime:
+        dependency-type: production
+        update-types: ["minor", "patch"]
+      dev:
+        dependency-type: development
+        update-types: ["minor", "patch"]
+    ignore:
+      # Pydantic majors need manual migration — handle out-of-band.
+      - dependency-name: pydantic
+        update-types: ["version-update:semver-major"]
+
+  # When the Node SDK lands in `/node`, uncomment this block.
+  # - package-ecosystem: npm
+  #   directory: /node
+  #   schedule:
+  #     interval: weekly
+  #     day: monday
+  #     time: "07:00"
+  #     timezone: Europe/Madrid
+  #   open-pull-requests-limit: 5
+  #   commit-message:
+  #     prefix: "chore(node)"
+  #   groups:
+  #     runtime:
+  #       dependency-type: production
+  #       update-types: ["minor", "patch"]
+  #     dev:
+  #       dependency-type: development
+  #       update-types: ["minor", "patch"]
