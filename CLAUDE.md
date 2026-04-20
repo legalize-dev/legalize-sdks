@@ -6,58 +6,95 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Monorepo for official Legalize API client libraries. Each language lives in its own top-level directory, self-contained with its own build/test/publish pipeline. The monorepo exists so all SDKs stay in lockstep with the shared OpenAPI spec at the root (`openapi.json` → filtered to `openapi-sdk.json`).
 
-Current state: Python SDK is the only implementation. `node/` and `go/` are reserved. `curl/` holds shell snippets.
+Current state: three SDKs shipped side-by-side — **Python** (`python/`), **Node/TypeScript** (`node/`), **Go** (`go/`). `curl/` holds shell snippets. Every SDK honors the same OpenAPI contract, the same env-var contract ([`ENVIRONMENT.md`](ENVIRONMENT.md)), and the same parity spec ([`PARITY.md`](PARITY.md)).
 
 ## Commands
 
-All Python commands run from `python/` (CI sets `working-directory: python`):
+### Python (from `python/`)
 
 ```bash
-# Setup
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 
-# The full PR gate
-ruff check .
-ruff format --check .
-mypy --strict src
-pytest --cov=legalize --cov-fail-under=95
+# Full offline gate
+ruff check . && ruff format --check . && mypy --strict src
+pytest -m "not integration" --cov=legalize --cov-fail-under=95
 
-# Run a single test file / test
-pytest tests/unit/test_retry.py
-pytest tests/unit/test_retry.py::test_retries_on_503 -v
-
-# Run by marker (configured in pyproject.toml)
-pytest -m unit
-pytest -m webhooks
-pytest -m property         # Hypothesis
-pytest -m contract         # schemathesis
-pytest -m integration      # requires LEGALIZE_API_KEY + LEGALIZE_BASE_URL
+# By marker (pyproject.toml)
+pytest -m unit | webhooks | property | contract | vcr | integration
 ```
 
-Spec + codegen pipeline (run from repo root):
+### Node (from `node/`)
+
+```bash
+npm install
+
+# Full offline gate
+npm run lint
+npm run typecheck
+npm test                   # vitest, excludes tests/integration/
+npm run build              # tsup → dist/ (ESM + CJS + .d.ts)
+
+# Live run against prod (needs LEGALIZE_API_KEY)
+npm run test:integration   # uses vitest.integration.config.ts
+```
+
+### Go (from `go/`)
+
+```bash
+go vet ./...
+go test -race ./...                     # offline
+go test -tags=integration -race ./...   # live, needs LEGALIZE_API_KEY
+golangci-lint run                       # uses .golangci.yml (v2 schema)
+```
+
+### Spec + codegen (from repo root)
 
 ```bash
 ./scripts/fetch_openapi.sh    # pulls https://legalize.dev/openapi.json → openapi.json
 ./scripts/filter_openapi.py   # strips non-SDK paths → openapi-sdk.json
 ./scripts/gen_models.sh       # regenerates python/src/legalize/models/_generated.py
+
+# Node types: from node/
+npm run generate:types        # openapi-typescript → src/generated.ts
 ```
 
-`gen_models.sh` chains the three steps and prefers `python/.venv/bin/datamodel-codegen` when present.
+Go structs under `go/generated.go` are currently hand-written to mirror `openapi-sdk.json`; regenerate with `oapi-codegen` when needed.
 
 ## Architecture
+
+Python is the **reference implementation**. [`PARITY.md`](PARITY.md) is the cross-SDK spec; when in doubt about any surface, read Python first, then PARITY.md, then the other SDKs.
 
 ### Python SDK layering
 
 `python/src/legalize/` is intentionally thin and transport-first:
 
-- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection.
-- `_retry.py` — `RetryPolicy` (exponential backoff, honors `Retry-After`). Resolved through `_resolve_retry_policy`: explicit `retry=` wins over `max_retries=`.
+- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection (populated on success AND error).
+- `_retry.py` — `RetryPolicy` (exponential backoff, honors `Retry-After` as both delta-seconds and HTTP-date). Resolved through `_resolve_retry_policy`: explicit `retry=` wins over `max_retries=`.
 - `_errors.py` — `APIError` hierarchy mapped by status code via `APIError.from_response`.
-- `_pagination.py` — cursor pagination helpers used by list endpoints.
-- `webhooks.py` — `Webhook.verify(payload, sig_header, timestamp, secret)`. Constant-time comparison, replay window, clock-skew tolerance. Must mirror the server's signature scheme exactly.
-- `resources/` — one module per API namespace (`laws`, `countries`, `jurisdictions`, `law_types`, `reforms`, `stats`, `webhooks`). Each module defines a sync class and `Async*` twin. Resources only assemble paths + params; they never build HTTP themselves. `_base.py` exposes the `/api/v1` prefix.
-- `models/_generated.py` — Pydantic v2 models produced by `datamodel-codegen`. Do not hand-edit; regenerate via `gen_models.sh`. Ruff/mypy exclude this path (see `pyproject.toml`).
+- `_pagination.py` — offset-based pagination helpers used by list endpoints.
+- `webhooks.py` — `Webhook.verify(payload, sig_header, timestamp, secret)`. Constant-time comparison, replay window, clock-skew tolerance. Mirrors the server's Stripe-style `v1=<hex>` scheme exactly.
+- `resources/` — one module per API namespace (`laws`, `countries`, `jurisdictions`, `law_types`, `reforms`, `stats`, `webhooks`). Each module defines a sync class and `Async*` twin. Resources depend on a `ClientProtocol` in `_base.py` — not on the concrete client — so the module graph is a DAG (no cyclic imports).
+- `models/_generated.py` — Pydantic v2 models produced by `datamodel-codegen`. Do not hand-edit; regenerate via `gen_models.sh`. Ruff/mypy exclude this path.
+
+### Node SDK layering
+
+`node/src/` mirrors Python:
+
+- `client.ts` — the `Legalize` class, promise-based, with fetch-based transport, `lastResponse` populated on success AND error, and `Symbol.asyncDispose` for TS 5.2+ `using` statements.
+- `retry.ts`, `errors.ts`, `pagination.ts`, `webhooks.ts`, `env.ts` — direct counterparts to the Python modules.
+- `resources/` — camelCased method names (`atCommit`, `lawTypes`), same semantics, TypeScript types from `src/generated.ts` (generated via `openapi-typescript`).
+- `tests/integration/` — vitest suite against prod, excluded from `npm test` by the main vitest config, run via `npm run test:integration` with a dedicated config.
+
+### Go SDK layering
+
+`go/` is a submodule at `github.com/legalize-dev/legalize-sdks/go`:
+
+- `client.go` — `Client` struct, functional options (`WithAPIKey`, `WithBaseURL`, ...), `context.Context` on every I/O method, `LastResponse()` accessor.
+- `retry.go`, `errors.go`, `pagination.go`, `webhooks.go`, `env.go` — Go-idiomatic mirrors. Error root type is `Error` (sealed interface with an unexported marker); typed variants (`NotFoundError`, `RateLimitError`, ...) embed `*APIError` for `errors.As` precision.
+- `countries.go`, `laws.go`, ... — one file per resource, each exposing a `*FooService` with PascalCased methods.
+- `generated.go` — response structs mirroring `openapi-sdk.json` (hand-written today; `oapi-codegen`-compatible).
+- `integration_test.go` — guarded by `//go:build integration`, runs against prod when `LEGALIZE_API_KEY` is set.
 
 ### OpenAPI filter
 
@@ -97,27 +134,35 @@ Coverage target: 95% (enforced by `pyproject.toml [tool.coverage.report] fail_un
 
 | Workflow | Trigger | Purpose |
 |---|---|---|
-| `python-ci.yml` | PR + push to `main` touching `python/**` or `openapi-sdk.json` | Lint + matrix test (3.10–3.13) + wheel smoke test |
-| `openapi-sync.yml` | Daily 06:00 UTC | Fetch + filter spec, regenerate models, open auto PR if diff |
-| `python-integration.yml` | Daily 05:00 UTC | Live read-only tests against prod using `LEGALIZE_API_KEY` secret |
-| `python-publish.yml` | Tag `python-v*` push | Verify → test → build → publish to PyPI (Trusted Publishing + PEP 740 attestations) → GitHub release |
-| `node-ci.yml` | PR + push touching `node/**` | **Dormant** until the Node SDK lands in `node/` |
-| `node-publish.yml` | Tag `node-v*` push | **Dormant** — mirror of the Python flow, publishes to npm with `--provenance` |
-| `go-ci.yml` | PR + push touching `go/**` | **Dormant** until the Go SDK lands in `go/` |
-| `go-publish.yml` | Tag `go/v*` push | **Dormant** — Go has no registry; workflow validates tag + CHANGELOG, runs tests, creates GitHub Release. `proxy.golang.org` picks the module up automatically |
+| `python-ci.yml` | PR + push touching `python/**` or `openapi-sdk.json` | Lint + matrix test (3.10 / 3.11 / 3.12 / 3.13) + wheel smoke test |
+| `python-integration.yml` | Daily 05:00 UTC + manual | Live read-only tests against prod using `LEGALIZE_API_KEY` |
+| `python-publish.yml` | Tag `python-v*` push | Verify versions/CHANGELOG → test → build → PyPI Trusted Publishing + PEP 740 attestations → GitHub Release |
+| `node-ci.yml` | PR + push touching `node/**` or `openapi-sdk.json` | Lint (ESLint flat config) + typecheck + matrix test (Node 20 / 22) + tsup build smoke test |
+| `node-integration.yml` | Daily 05:15 UTC + manual | Live integration against prod via dedicated `vitest.integration.config.ts` |
+| `node-publish.yml` | Tag `node-v*` push | Verify → test → `npm publish --provenance` (sigstore) → GitHub Release |
+| `go-ci.yml` | PR + push touching `go/**` or `openapi-sdk.json` | `go vet` + `gofmt` + `golangci-lint v2` + matrix `go test -race` (Go 1.22 / 1.23 / 1.24) |
+| `go-integration.yml` | Daily 05:30 UTC + manual | `go test -tags=integration -race` against prod |
+| `go-publish.yml` | Tag `go/v*` push | Verify → test → GitHub Release → warm `proxy.golang.org` (no registry upload — Go modules resolve from the tag) |
+| `openapi-sync.yml` | Daily 06:00 UTC + manual | Fetch + filter spec, regenerate models, open auto PR on diff |
+| `codeql.yml` | Push + PR + weekly | CodeQL `security-extended` + `security-and-quality` on Python, TypeScript, Go, and Actions workflows |
 
-Release flow (Python): bump `python/pyproject.toml` + `python/src/legalize/_version.py` + `python/CHANGELOG.md` (add `## [X.Y.Z] — YYYY-MM-DD` section) in one PR, land, then push tag `python-vX.Y.Z`. The publish workflow fails closed if any of the three version sources disagree or if CHANGELOG has no matching section. PyPI upload runs via OIDC Trusted Publishing (no long-lived tokens); artifacts carry PEP 740 attestations; a GitHub Release is opened with the CHANGELOG section as notes.
+All workflows declare top-level `permissions: contents: read` and elevate only the jobs that need more (publish → `id-token: write` + `attestations: write`, release → `contents: write`, openapi-sync → `pull-requests: write`). Every third-party action is SHA-pinned.
 
-One-time PyPI setup before the first run of the hardened workflow: add a Trusted Publisher on PyPI (repo `legalize-dev/legalize-sdks`, workflow `python-publish.yml`, environment `pypi`). The fallback `PYPI_API_TOKEN` secret can be deleted afterwards.
+Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push the tag. The publish workflow fails closed on version mismatch or missing CHANGELOG entry.
 
-Per `CONTRIBUTING.md`, each SDK in the monorepo follows the same pattern (`<lang>-ci.yml` + `<lang>-publish.yml`). Tag conventions: `python-vX.Y.Z`, `node-vX.Y.Z`, and `go/vX.Y.Z` (Go uses a slash prefix because it is a Go submodule and the module resolver requires the subdirectory path in the tag — `github.com/legalize-dev/legalize-sdks/go@vX.Y.Z`). SDK versions track the SDK, not the API; API version is negotiated per-request via the `Legalize-API-Version` header.
+- Python: `python/pyproject.toml` + `python/src/legalize/_version.py` + `python/CHANGELOG.md`, tag `python-vX.Y.Z`.
+- Node: `node/package.json` + `node/CHANGELOG.md`, tag `node-vX.Y.Z`.
+- Go: `go/version.go` + `go/CHANGELOG.md`, tag `go/vX.Y.Z` (the `go/` prefix is mandatory — Go's submodule resolver requires it).
 
-Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions and for the Python dev/runtime stacks (pydantic majors are held back for manual migration). The npm block is commented out and should be uncommented when `node/package.json` exists.
+SDK versions track the SDK, not the API. API version is negotiated per-request via `Legalize-API-Version` (default `v1`, overridable via `LEGALIZE_API_VERSION`).
+
+Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Pydantic majors are held back for manual migration. Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
 
 ## Conventions
 
-- Python ≥ 3.10. `from __future__ import annotations` everywhere.
-- `mypy --strict` on `src/`; tests/examples/generated models are excluded.
-- Ruff: line length 100, double quotes, selects `E,F,W,I,B,UP,N,S,RUF`. Tests allow `S105/S106/S311`; generated models ignore `N815/UP`.
+- Python ≥ 3.10, `mypy --strict` on `src/`, ruff line length 100, `from __future__ import annotations` everywhere. Tests allow `S105/S106/S311`; generated models ignore `N815/UP`.
+- Node ≥ 20, TypeScript 5.4+, strict mode, ESLint flat config, ESM + CJS dual build via tsup, zero runtime deps.
+- Go ≥ 1.22 (matrix tests 1.22/1.23/1.24), stdlib only, `context.Context` first on every I/O, functional options. golangci-lint config is v2 schema (run via `golangci/golangci-lint-action@v9`).
 - All code, identifiers, commit messages in English (per workspace convention in the parent `legalize/CLAUDE.md`).
 - Sync and async APIs must stay symmetric — same resource method names, same error types, same kwargs.
+- Every SDK-surface change must keep PARITY.md in sync. Changing a method signature in Python requires the same change across Node and Go.
