@@ -3,7 +3,7 @@
  *
  * Install dependencies:
  *
- *   npm install fastify legalize
+ *   npm install fastify @fastify/rate-limit legalize
  *
  * Run:
  *
@@ -11,6 +11,7 @@
  */
 
 import Fastify from "fastify";
+import rateLimit from "@fastify/rate-limit";
 
 import { Webhook, WebhookVerificationError } from "legalize";
 
@@ -20,6 +21,11 @@ if (!SECRET) {
 }
 
 const app = Fastify({ logger: true });
+
+// Rate limit before signature verification to block unauthenticated
+// floods. 120 req/min/IP is generous for Legalize's delivery cadence;
+// tune for your scale.
+await app.register(rateLimit, { max: 120, timeWindow: "1 minute" });
 
 // Register a raw-body parser for application/json so signature
 // verification sees the exact bytes the server signed.
@@ -31,7 +37,13 @@ app.addContentTypeParser(
   },
 );
 
-app.post("/webhooks/legalize", async (req, reply) => {
+// Rate limiting is installed globally above via @fastify/rate-limit
+// registration, which covers this route. CodeQL's dataflow analyzer
+// doesn't follow plugin decorators, hence the suppression.
+// lgtm[js/missing-rate-limiting]
+app.post("/webhooks/legalize", {
+  config: { rateLimit: { max: 120, timeWindow: "1 minute" } },
+}, async (req, reply) => {
   try {
     const event = Webhook.verify({
       payload: req.body as Buffer,

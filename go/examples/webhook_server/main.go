@@ -11,9 +11,9 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -52,19 +52,16 @@ func main() {
 			return
 		}
 
+		// Structured logging with slog is log-injection-safe: even if
+		// event.Type or event.Data contain newlines, slog writes them
+		// as a single structured record, not forged log lines.
 		switch event.Type {
-		case "law.updated":
-			fmt.Printf("received law.updated: %s\n", string(event.Data))
-		case "law.created":
-			fmt.Printf("received law.created: %s\n", string(event.Data))
-		case "law.repealed":
-			fmt.Printf("received law.repealed: %s\n", string(event.Data))
-		case "reform.created":
-			fmt.Printf("received reform.created: %s\n", string(event.Data))
+		case "law.updated", "law.created", "law.repealed", "reform.created":
+			slog.Info("received webhook", "type", event.Type, "data", string(event.Data))
 		case "test.ping":
-			fmt.Println("received test.ping")
+			slog.Info("received webhook", "type", "test.ping")
 		default:
-			fmt.Printf("unknown event type: %s\n", event.Type)
+			slog.Warn("unknown event type", "type", event.Type)
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -73,7 +70,7 @@ func main() {
 	if v := os.Getenv("ADDR"); v != "" {
 		addr = v
 	}
-	log.Printf("listening on %s", addr) //nolint:gosec // example code: the event type comes from a verified webhook payload, trusted
+	slog.Info("listening", "addr", addr)
 	server := &http.Server{Addr: addr, Handler: mux, ReadHeaderTimeout: 5 * time.Second}
 	log.Fatal(server.ListenAndServe())
 }

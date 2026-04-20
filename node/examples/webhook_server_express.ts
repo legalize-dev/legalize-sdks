@@ -3,7 +3,7 @@
  *
  * Install dependencies:
  *
- *   npm install express legalize
+ *   npm install express express-rate-limit legalize
  *   npm install --save-dev @types/express
  *
  * Run:
@@ -15,6 +15,7 @@
  */
 
 import express from "express";
+import rateLimit from "express-rate-limit";
 
 import { Webhook, WebhookVerificationError } from "legalize";
 
@@ -24,11 +25,23 @@ if (!SECRET) {
   throw new Error("LEGALIZE_WHSEC is required");
 }
 
+// Rate-limit the webhook endpoint. Legalize sends each event at most a
+// handful of times per minute, so this cap is generous; tune it for
+// the scale you expect. The limiter runs before signature verification
+// so it also protects against unauthenticated flooders.
+const limiter = rateLimit({
+  windowMs: 60_000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // CRITICAL: use express.raw so we get the exact bytes the server signed.
 // If you use `express.json()` the body is re-serialized and the signature
 // no longer matches.
 app.post(
   "/webhooks/legalize",
+  limiter,
   express.raw({ type: "application/json" }),
   (req, res) => {
     try {
@@ -38,7 +51,10 @@ app.post(
         timestamp: req.header("X-Legalize-Timestamp") ?? "",
         secret: SECRET,
       });
-      console.log(`[${event.type}] ${event.id}`, event.data);
+      // Structured logging via JSON is injection-safe — newlines in
+      // user-controlled fields become \n inside a single record rather
+      // than forging additional log lines.
+      console.log(JSON.stringify({ type: event.type, id: event.id, data: event.data }));
       if (event.type === "law.updated") {
         // React to law updates — enqueue a worker, update your DB, etc.
       }

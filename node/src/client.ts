@@ -51,6 +51,14 @@ export function defaultUserAgent(): string {
   return `legalize-node/${SDK_VERSION} node/${process.version} ${os.platform()}`;
 }
 
+// O(n) non-regex trimmer — avoids polynomial backtracking on a
+// pathological base URL, even though the input is trusted.
+function stripTrailingSlashes(s: string): string {
+  let end = s.length;
+  while (end > 0 && s.charCodeAt(end - 1) === 47 /* "/" */) end--;
+  return s.slice(0, end);
+}
+
 /** The fetch implementation the client uses. Global by default; overridable. */
 export type FetchImpl = typeof fetch;
 
@@ -115,7 +123,7 @@ export class Legalize {
 
   constructor(options: LegalizeOptions = {}) {
     this._apiKey = resolveApiKey(options.apiKey);
-    this._baseUrl = resolveBaseUrl(options.baseUrl).replace(/\/+$/, "");
+    this._baseUrl = stripTrailingSlashes(resolveBaseUrl(options.baseUrl));
     this._apiVersion = resolveApiVersion(options.apiVersion);
     this._timeout = options.timeout ?? DEFAULT_TIMEOUT;
     this._retry = resolveRetryPolicy(options.retry, options.maxRetries);
