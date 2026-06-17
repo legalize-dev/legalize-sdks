@@ -93,6 +93,45 @@ past, _ := client.Laws().AtCommit(ctx, "es", "ley_organica_3_2018",
 fmt.Println(past.ContentMD) // Markdown at that revision
 ```
 
+### XML (and other raw formats)
+
+The typed methods always return JSON-parsed models. When your app speaks
+XML, use `RequestRaw` to fetch any endpoint in another wire format via
+content negotiation — it sets `Accept` and hands you the body untouched
+so you can decode it with the standard library:
+
+```go
+import "encoding/xml"
+
+res, err := client.RequestRaw(ctx, "GET", "/api/v1/es/laws/BOE-A-1978-31229")
+if err != nil {
+    log.Fatal(err)
+}
+res.ContentType        // "application/xml; charset=utf-8"
+xmlText := res.Text    // the raw XML string
+
+var law struct {
+    ID    string `xml:"id,attr"`
+    Title string `xml:"title"`
+}
+if err := xml.Unmarshal(res.Content, &law); err != nil {
+    log.Fatal(err)
+}
+
+// WithFormat("json") or any explicit media type works the same way:
+res, _ = client.RequestRaw(ctx, "GET", "/api/v1/countries", legalize.WithFormat("json"))
+```
+
+`RequestRaw` defaults to XML (`Accept: application/xml`) when no
+`WithFormat` option is given; `WithFormat("json")` requests JSON and any
+other value (e.g. `"text/xml"`) is sent verbatim as the media type.
+`WithParams` and `WithExtraHeaders` are honoured as on `Do`. No XML
+parsing is performed — you unmarshal `res.Content` yourself, against an
+`encoding/xml`-tagged type or a hardened parser of your choice. Errors
+raise the same typed errors as the JSON methods (the error body is in
+the negotiated format). See the
+[Response formats](https://legalize.dev/docs/formats) docs.
+
 ### Errors
 
 Every non-2xx response surfaces as a typed error. Match on the

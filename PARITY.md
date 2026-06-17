@@ -24,6 +24,7 @@ realign.
 9. [HTTP contract](#9-http-contract)
 10. [Testing expectations](#10-testing-expectations)
 11. [Packaging and versioning](#11-packaging-and-versioning)
+12. [Response formats](#12-response-formats-content-negotiation)
 
 ---
 
@@ -376,6 +377,47 @@ Every SDK ships with:
 - `examples/` — at minimum: list laws, search, async (if applicable),
   webhook server integration for the language's dominant framework
   (Python: Flask + FastAPI; Node: Express + Fastify; Go: net/http).
+
+---
+
+## 12. Response formats (content negotiation)
+
+The API serializes every response as JSON by default and as XML when the
+client negotiates for it — `Accept: application/xml` (the standard
+mechanism) or the `?format=xml` query-param override. JSON stays the
+default; no header, `Accept: */*`, or `Accept: application/json` is
+unaffected. Error envelopes honor the same negotiation.
+
+The typed resource methods (§3) always request and return JSON. Every SDK
+MUST additionally expose a low-level raw primitive for callers who need
+another wire format (e.g. an application that speaks XML):
+
+| Language | Primitive |
+|---|---|
+| Python | `request_raw(method, path, *, params=None, format="xml", extra_headers=None)` (sync + async) |
+| Node | `requestRaw(method, path, { params?, format?, extraHeaders?, signal? })` |
+| Go | `RequestRaw(ctx, method, path string, opts ...RequestOption)` with the `WithFormat(format)` option |
+
+Contract:
+
+- `format` maps to the `Accept` header: `"xml"` → `application/xml`,
+  `"json"` → `application/json`, empty → `application/xml` (the default),
+  any other value sent verbatim as the media type.
+- The body is returned UNDECODED in a `RawResponse` carrying, at minimum:
+  the status code (`status_code` / `statusCode` / `StatusCode`), the raw
+  bytes (`content` / `Content`), the decoded `text` / `Text`, the
+  `content_type` / `contentType` / `ContentType`, and the response
+  `headers` / `Header`.
+- The raw primitive reuses the same retry policy, the same `last_response`
+  exposure, and raises/returns the SAME typed errors as the JSON path on a
+  non-2xx response (the error body is in whatever format was negotiated).
+- XML parsing is NOT part of the contract: Python offers a stdlib
+  `RawResponse.xml()` convenience; Node and Go expose the raw `text` /
+  bytes and leave parsing to the caller (Node ships zero runtime deps, Go
+  is stdlib-only). A `json()` convenience is provided where idiomatic.
+
+This keeps the typed surface JSON-only and stable while giving XML-native
+consumers a first-class, parity-consistent path.
 
 ---
 

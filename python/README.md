@@ -64,6 +64,27 @@ past = client.laws.at_commit(
 print(past.content)  # Markdown at that revision
 ```
 
+### XML (and other raw formats)
+
+The typed methods always return JSON-parsed models. When your app speaks
+XML, use `request_raw` to fetch any endpoint in another wire format via
+content negotiation — it sets `Accept` and hands you the body untouched:
+
+```python
+res = client.request_raw("GET", "/api/v1/es/laws/BOE-A-1978-31229")
+res.content_type        # "application/xml; charset=utf-8"
+xml_text = res.text     # the raw XML string
+root = res.xml()        # parsed into an ElementTree element
+
+# format="json" or any explicit media type works the same way:
+data = client.request_raw("GET", "/api/v1/countries", format="json").json()
+```
+
+`request_raw` defaults to `format="xml"`. Errors raise the same typed
+exceptions as the JSON methods (the error body is in the negotiated
+format). See the
+[Response formats](https://legalize.dev/docs/formats) docs.
+
 ### Async
 
 ```python

@@ -23,8 +23,10 @@ from __future__ import annotations
 import os
 import platform
 import time
+from collections.abc import Mapping
+from dataclasses import dataclass
 from types import TracebackType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import httpx
 
@@ -37,11 +39,92 @@ from legalize._errors import (
 from legalize._retry import RetryPolicy, parse_retry_after
 from legalize._version import __version__
 
+if TYPE_CHECKING:
+    import xml.etree.ElementTree as ET
+
 DEFAULT_BASE_URL = "https://legalize.dev"
 DEFAULT_API_VERSION = "v1"
 DEFAULT_TIMEOUT = 30.0
 
 KEY_PREFIX = "leg_"
+
+
+@dataclass(frozen=True)
+class RawResponse:
+    """A raw, non-JSON-decoded API response.
+
+    Returned by :meth:`Legalize.request_raw` /
+    :meth:`AsyncLegalize.request_raw` for content negotiation — when you
+    want the body in a specific wire format (e.g. XML) instead of the
+    typed JSON model the resource methods return.
+
+    Attributes:
+        status_code: HTTP status of the response.
+        content: raw response body as bytes.
+        text: the body decoded to ``str`` (server charset, default UTF-8).
+        content_type: the ``Content-Type`` header value (e.g.
+            ``application/xml; charset=utf-8``).
+        headers: the response headers as a plain mapping.
+    """
+
+    status_code: int
+    content: bytes
+    text: str
+    content_type: str
+    headers: Mapping[str, str]
+
+    def xml(self) -> ET.Element:
+        """Parse the body as XML and return the root element.
+
+        Uses the standard library (``xml.etree.ElementTree``) and raises
+        ``xml.etree.ElementTree.ParseError`` if the body is not XML.
+
+        Safe for Legalize API responses: the server emits no DTD or
+        entity declarations and the body arrives over TLS. If you point
+        the client at an untrusted ``base_url`` and need to defend
+        against entity-expansion attacks, parse ``.content`` yourself
+        with a hardened parser such as ``defusedxml``.
+        """
+        import xml.etree.ElementTree as ET
+
+        # The body is first-party Legalize XML (no DTD, no entities)
+        # fetched over TLS — see the docstring threat model.
+        return ET.fromstring(self.content)  # noqa: S314
+
+    def json(self) -> Any:
+        """Parse the body as JSON (handy when ``format="json"``)."""
+        import json
+
+        return json.loads(self.content)
+
+
+_FORMAT_ALIASES = {
+    "xml": "application/xml",
+    "json": "application/json",
+}
+
+
+def _format_to_accept(fmt: str) -> str:
+    """Map a ``format`` shorthand to an Accept media type.
+
+    ``"xml"`` → ``application/xml``, ``"json"`` → ``application/json``.
+    Any other value is treated as an explicit media type and sent as-is
+    (so ``format="text/xml"`` works too). Empty falls back to XML.
+    """
+    key = (fmt or "").strip().lower()
+    if not key:
+        return "application/xml"
+    return _FORMAT_ALIASES.get(key, fmt)
+
+
+def _raw_from_response(response: httpx.Response) -> RawResponse:
+    return RawResponse(
+        status_code=response.status_code,
+        content=response.content,
+        text=response.text,
+        content_type=response.headers.get("content-type", ""),
+        headers=dict(response.headers),
+    )
 
 
 def _default_user_agent() -> str:
@@ -300,6 +383,42 @@ class Legalize(_BaseClient):
                 response=response,
             ) from exc
 
+    def request_raw(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        format: str = "xml",
+        extra_headers: dict[str, str] | None = None,
+    ) -> RawResponse:
+        """Execute a request and return the raw, non-JSON-decoded body.
+
+        The escape hatch for content negotiation: the typed resource
+        methods always return JSON models, but ``request_raw`` lets you
+        fetch any endpoint in another wire format. ``format`` controls
+        the ``Accept`` header — ``"xml"`` (default) requests
+        ``application/xml``, ``"json"`` requests ``application/json``,
+        and any other value is sent verbatim as the media type.
+
+        Example::
+
+            res = client.request_raw("GET", "/api/v1/es/laws/BOE-A-1978-31229")
+            xml_text = res.text          # already application/xml
+            root = res.xml()             # parsed ElementTree
+
+        Raises the same :class:`APIError` subclasses as :meth:`request`
+        on a non-2xx response; the error body is in whatever format you
+        negotiated.
+        """
+        headers = {"Accept": _format_to_accept(format)}
+        if extra_headers:
+            headers.update(extra_headers)
+        request = self._build_request(method, path, params=params, extra_headers=headers)
+        response = self._send_with_retry(request, method=method.upper())
+        self._last_response = response
+        return _raw_from_response(response)
+
     def _send_with_retry(self, request: httpx.Request, *, method: str = "GET") -> httpx.Response:
         last_exc: Exception | None = None
         attempt = 0
@@ -422,27 +541,17 @@ class AsyncLegalize(_BaseClient):
     ) -> None:
         await self.aclose()
 
-    async def request(
-        self,
-        method: str,
-        path: str,
-        *,
-        params: dict[str, Any] | None = None,
-        json: Any = None,
-        extra_headers: dict[str, str] | None = None,
-    ) -> Any:
+    async def _asend_with_retry(
+        self, request: httpx.Request, *, method: str = "GET"
+    ) -> httpx.Response:
         import asyncio
 
-        request = self._build_request(
-            method, path, params=params, json=json, extra_headers=extra_headers
-        )
-        method_upper = method.upper()
         attempt = 0
         while True:
             try:
                 response = await self._http.send(request)
             except Exception as exc:
-                if not self._retry.should_retry(attempt, status=None, method=method_upper):
+                if not self._retry.should_retry(attempt, status=None, method=method):
                     _raise_for_transport_error(exc)
                     raise
                 delay = self._retry.compute_delay(attempt, retry_after=None)
@@ -451,22 +560,9 @@ class AsyncLegalize(_BaseClient):
                 continue
 
             if 200 <= response.status_code < 300:
-                self._last_response = response
-                if response.status_code == 204 or not response.content:
-                    return None
-                try:
-                    return response.json()
-                except ValueError as exc:
-                    raise APIError(
-                        "Server returned non-JSON body",
-                        status_code=response.status_code,
-                        body=response.content,
-                        response=response,
-                    ) from exc
+                return response
 
-            if not self._retry.should_retry(
-                attempt, status=response.status_code, method=method_upper
-            ):
+            if not self._retry.should_retry(attempt, status=response.status_code, method=method):
                 # Expose the failing response so callers can inspect
                 # rate-limit headers / request IDs before raising.
                 self._last_response = response
@@ -477,6 +573,50 @@ class AsyncLegalize(_BaseClient):
             await response.aclose()
             await asyncio.sleep(delay)
             attempt += 1
+
+    async def request(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> Any:
+        request = self._build_request(
+            method, path, params=params, json=json, extra_headers=extra_headers
+        )
+        response = await self._asend_with_retry(request, method=method.upper())
+        self._last_response = response
+        if response.status_code == 204 or not response.content:
+            return None
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise APIError(
+                "Server returned non-JSON body",
+                status_code=response.status_code,
+                body=response.content,
+                response=response,
+            ) from exc
+
+    async def request_raw(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, Any] | None = None,
+        format: str = "xml",
+        extra_headers: dict[str, str] | None = None,
+    ) -> RawResponse:
+        """Async twin of :meth:`Legalize.request_raw`."""
+        headers = {"Accept": _format_to_accept(format)}
+        if extra_headers:
+            headers.update(extra_headers)
+        request = self._build_request(method, path, params=params, extra_headers=headers)
+        response = await self._asend_with_retry(request, method=method.upper())
+        self._last_response = response
+        return _raw_from_response(response)
 
     @property
     def last_response(self) -> httpx.Response | None:
@@ -503,4 +643,5 @@ __all__ = [
     "DEFAULT_TIMEOUT",
     "AsyncLegalize",
     "Legalize",
+    "RawResponse",
 ]
