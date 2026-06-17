@@ -17,6 +17,7 @@ from legalize._client import (
     DEFAULT_TIMEOUT,
     AsyncLegalize,
     Legalize,
+    RawResponse,
 )
 from legalize._errors import (
     APIConnectionError,
@@ -52,6 +53,7 @@ __all__ = [
     "LegalizeError",
     "NotFoundError",
     "RateLimitError",
+    "RawResponse",
     "RetryPolicy",
     "ServerError",
     "ServiceUnavailableError",

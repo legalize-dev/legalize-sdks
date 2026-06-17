@@ -109,6 +109,32 @@ event, err := legalize.Verify(payload, sigHeader, timestamp, secret)
 
 All three perform constant-time HMAC-SHA256 comparison, enforce a 5-minute replay window, and verify before JSON-parsing.
 
+### Response formats (XML)
+
+Every endpoint returns JSON by default and XML on request — via
+`Accept: application/xml` or `?format=xml`. The typed methods always
+return JSON models; the low-level raw primitive fetches any endpoint in
+another wire format:
+
+```python
+# Python
+xml = client.request_raw("GET", "/api/v1/es/laws/BOE-A-1978-31229").text
+```
+
+```ts
+// Node
+const { text } = await client.requestRaw("GET", "/api/v1/es/laws/BOE-A-1978-31229");
+```
+
+```go
+// Go
+res, _ := client.RequestRaw(ctx, "GET", "/api/v1/es/laws/BOE-A-1978-31229")
+_ = res.Text
+```
+
+`format="xml"` is the default; pass `format="json"` for a raw JSON body.
+See [PARITY.md §12](PARITY.md) for the full cross-SDK contract.
+
 ## Design principles
 
 1. **Typed end-to-end.** Pydantic v2 / TypeScript with `.d.ts` / Go structs — all generated from the same OpenAPI spec.

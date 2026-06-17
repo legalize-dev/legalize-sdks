@@ -8,6 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-17
+
+### Added
+
+- `Client.RequestRaw(ctx, method, path, opts...)` — the low-level
+  escape hatch for content negotiation. It fetches any endpoint in a
+  non-JSON wire format and returns a `*RawResponse` (`StatusCode`,
+  `Content`, `Text`, `ContentType`, `Header`) without decoding the
+  body. It reuses the same request path as `Do`, so retries,
+  `LastResponse()`, and the typed-error behaviour are identical to the
+  JSON path; a non-2xx response returns a nil `*RawResponse` and the
+  same typed error.
+- `WithFormat(format)` request option controlling the `Accept` header
+  for `RequestRaw`: `"xml"` (the default when omitted) sends
+  `Accept: application/xml`, `"json"` sends `application/json`, and any
+  other value is sent verbatim as the media type (e.g. `"text/xml"`).
+  It has no effect on `Do` or the typed resource services.
+- `RawResponse` struct. No XML parsing is performed (stdlib only):
+  unmarshal `Content` yourself with `encoding/xml` against your own
+  type.
+
+The typed resource services still return JSON-parsed models; XML is
+opt-in per call via `RequestRaw`. Parity with the Python SDK 0.2.0.
+
 ### Changed
 
 - Renamed the sealed error interface from `LegalizeError` to `Error`

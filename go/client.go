@@ -170,6 +170,10 @@ type requestConfig struct {
 	params       map[string]any
 	body         any
 	extraHeaders http.Header
+	// format is the wire format requested via WithFormat. It is only
+	// consulted by RequestRaw (Do and the typed services always
+	// negotiate JSON). Empty means "use RequestRaw's default" (XML).
+	format string
 }
 
 // WithParams attaches query parameters to the request. Values are

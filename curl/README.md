@@ -29,6 +29,25 @@ legalize 'https://legalize.dev/api/v1/es/laws?q=protecci%C3%B3n+de+datos&per_pag
 legalize https://legalize.dev/api/v1/es/laws/ley_organica_3_2018 | jq '.title, .content_md' | head
 ```
 
+## Request XML instead of JSON
+
+Every endpoint also speaks XML via content negotiation. Send
+`Accept: application/xml`, or append `?format=xml` (handy when you can't
+set a header):
+
+```bash
+# Accept header
+legalize -H "Accept: application/xml" \
+  https://legalize.dev/api/v1/es/laws/ley_organica_3_2018
+
+# Query param — no extra header needed
+legalize 'https://legalize.dev/api/v1/es/laws/ley_organica_3_2018?format=xml'
+```
+
+JSON stays the default, so every snippet above without the header is
+unchanged. Errors honor the same negotiation: an XML request gets an XML
+error envelope.
+
 ## Time-travel to a historical version
 
 ```bash

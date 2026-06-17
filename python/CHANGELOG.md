@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-17
+
+### Added
+
+- `request_raw(method, path, *, params=None, format="xml", extra_headers=None)`
+  on both `Legalize` and `AsyncLegalize` — the low-level escape hatch for
+  content negotiation. It fetches any endpoint in a non-JSON wire format
+  and returns a `RawResponse` (`.status_code`, `.content`, `.text`,
+  `.content_type`, `.headers`) without JSON-decoding. `format="xml"` (the
+  default) sends `Accept: application/xml`, `format="json"` sends
+  `application/json`, and any other value is used verbatim as the media
+  type.
+- `RawResponse.xml()` parses the body into an `xml.etree.ElementTree`
+  element (stdlib only); `RawResponse.json()` parses it as JSON.
+- `RawResponse` is exported from the top-level `legalize` package.
+
+The typed resource methods still return JSON-parsed models; XML is opt-in
+per call via `request_raw`. See the "Response formats" API docs.
+
 ## [0.1.1] — 2026-04-20
 
 ### Added

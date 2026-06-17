@@ -87,6 +87,67 @@ export interface RequestOptions {
   idempotencyKey?: string;
 }
 
+export interface RequestRawOptions extends Omit<RequestOptions, "json"> {
+  /**
+   * The wire format to negotiate via the `Accept` header. `"xml"` (the
+   * default) requests `application/xml`, `"json"` requests
+   * `application/json`, and any other value is sent verbatim as the
+   * media type (so `format: "text/xml"` works too). Empty falls back to
+   * XML.
+   */
+  format?: string;
+}
+
+/**
+ * A raw, non-JSON-decoded API response.
+ *
+ * Returned by {@link Legalize.requestRaw} for content negotiation — when
+ * you want the body in a specific wire format (e.g. XML) instead of the
+ * typed JSON model the resource methods return. The SDK has zero runtime
+ * dependencies and ships no XML parser: parse `.text` (or `.content`)
+ * with your own library (e.g. `fast-xml-parser`, `@xmldom/xmldom`).
+ */
+export interface RawResponse {
+  /** HTTP status of the response. */
+  statusCode: number;
+  /** Raw response body as bytes. */
+  content: Uint8Array;
+  /** The body decoded to a string (server charset, default UTF-8). */
+  text: string;
+  /** The `Content-Type` header value (e.g. `application/xml; charset=utf-8`). */
+  contentType: string;
+  /** The response headers as a plain, lower-cased mapping. */
+  headers: Record<string, string>;
+  /** Parse the body as JSON (handy when `format: "json"`). */
+  json(): unknown;
+}
+
+const FORMAT_ALIASES: Record<string, string> = {
+  xml: "application/xml",
+  json: "application/json",
+};
+
+/**
+ * Map a `format` shorthand to an Accept media type.
+ *
+ * `"xml"` → `application/xml`, `"json"` → `application/json`. Any other
+ * value is treated as an explicit media type and sent as-is (so
+ * `format: "text/xml"` works too). Empty falls back to XML.
+ */
+export function formatToAccept(format: string | undefined): string {
+  const key = (format ?? "").trim().toLowerCase();
+  if (!key) return "application/xml";
+  return FORMAT_ALIASES[key] ?? format!;
+}
+
+function headersToRecord(headers: Headers): Record<string, string> {
+  const out: Record<string, string> = {};
+  headers.forEach((value, key) => {
+    out[key] = value;
+  });
+  return out;
+}
+
 /**
  * Synchronous-API, promise-based client for the Legalize API.
  *
@@ -158,7 +219,6 @@ export class Legalize {
     options: RequestOptions = {},
   ): Promise<T> {
     const upperMethod = method.toUpperCase();
-    const url = this.buildUrl(path, options.params);
     const headers = { ...this._headers };
     if (options.extraHeaders) Object.assign(headers, options.extraHeaders);
     if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
@@ -166,61 +226,61 @@ export class Legalize {
     const hasJson = options.json !== undefined;
     if (hasJson) headers["Content-Type"] = "application/json";
 
-    let attempt = 0;
-    while (true) {
-      let response: Response;
-      try {
-        response = await this.sendOnce(url, upperMethod, headers, options, hasJson);
-      } catch (err) {
-        const shouldRetry = this._retry.shouldRetry(attempt, { method: upperMethod });
-        if (!shouldRetry) {
-          throw wrapTransportError(err);
-        }
-        const delay = this._retry.computeDelay(attempt, {});
-        await sleep(delay);
-        attempt += 1;
-        continue;
-      }
-
-      if (response.status >= 200 && response.status < 300) {
-        this._lastResponse = response;
-        if (response.status === 204) return null as T;
-        const text = await response.text();
-        if (!text) return null as T;
-        try {
-          return JSON.parse(text) as T;
-        } catch (err) {
-          throw new APIError({
-            message: "Server returned non-JSON body",
-            statusCode: response.status,
-            body: text,
-            response,
-            cause: err,
-          });
-        }
-      }
-
-      // Non-2xx: decide whether to retry.
-      const shouldRetry = this._retry.shouldRetry(attempt, {
-        status: response.status,
-        method: upperMethod,
+    const response = await this.sendWithRetry(upperMethod, path, headers, options, hasJson);
+    this._lastResponse = response;
+    if (response.status === 204) return null as T;
+    const text = await response.text();
+    if (!text) return null as T;
+    try {
+      return JSON.parse(text) as T;
+    } catch (err) {
+      throw new APIError({
+        message: "Server returned non-JSON body",
+        statusCode: response.status,
+        body: text,
+        response,
+        cause: err,
       });
-      if (!shouldRetry) {
-        this._lastResponse = response;
-        throw await errorFromResponse(response);
-      }
-
-      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
-      const delay = this._retry.computeDelay(attempt, { retryAfter });
-      // Drain the response body so the socket can be reused.
-      try {
-        await response.text();
-      } catch {
-        /* no-op — best-effort drain */
-      }
-      await sleep(delay);
-      attempt += 1;
     }
+  }
+
+  /**
+   * Execute a request and return the raw, non-JSON-decoded body.
+   *
+   * The escape hatch for content negotiation: the typed resource methods
+   * always return JSON models, but `requestRaw` lets you fetch any
+   * endpoint in another wire format. `format` controls the `Accept`
+   * header — `"xml"` (the default) requests `application/xml`, `"json"`
+   * requests `application/json`, and any other value is sent verbatim as
+   * the media type.
+   *
+   * The SDK has zero runtime deps and ships no XML parser — parse the
+   * returned `.text` (or `.content`) with your own library.
+   *
+   * Example:
+   *
+   *   const res = await client.requestRaw("GET", "/api/v1/es/laws/BOE-A-1978-31229");
+   *   res.contentType; // "application/xml; charset=utf-8"
+   *   const xmlText = res.text; // already application/xml
+   *
+   * Throws the same APIError subclasses as {@link request} on a non-2xx
+   * response; the error body is in whatever format you negotiated.
+   */
+  async requestRaw(
+    method: string,
+    path: string,
+    options: RequestRawOptions = {},
+  ): Promise<RawResponse> {
+    const upperMethod = method.toUpperCase();
+    const headers: Record<string, string> = { ...this._headers };
+    // Override the default `Accept: application/json` with the negotiated format.
+    headers["Accept"] = formatToAccept(options.format);
+    if (options.extraHeaders) Object.assign(headers, options.extraHeaders);
+    if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
+
+    const response = await this.sendWithRetry(upperMethod, path, headers, options, false);
+    this._lastResponse = response;
+    return rawFromResponse(response);
   }
 
   /** Release any resources held by the client. Kept for API symmetry. */
@@ -249,6 +309,67 @@ export class Legalize {
     const query = buildQueryString(params);
     if (!query) return base;
     return base.includes("?") ? `${base}&${query}` : `${base}?${query}`;
+  }
+
+  /**
+   * Run the retry loop and return the raw 2xx `Response`.
+   *
+   * Shared by {@link request} (which then JSON-parses) and
+   * {@link requestRaw} (which builds a `RawResponse`). Applies the retry
+   * policy on transport errors and retryable statuses, populates
+   * `lastResponse` on the failing response before raising, and throws the
+   * typed `APIError` hierarchy on a final non-2xx. The returned response
+   * body is left unread for the caller to consume.
+   */
+  private async sendWithRetry(
+    method: string,
+    path: string,
+    headers: Record<string, string>,
+    options: RequestOptions,
+    hasJson: boolean,
+  ): Promise<Response> {
+    const url = this.buildUrl(path, options.params);
+    let attempt = 0;
+    while (true) {
+      let response: Response;
+      try {
+        response = await this.sendOnce(url, method, headers, options, hasJson);
+      } catch (err) {
+        const shouldRetry = this._retry.shouldRetry(attempt, { method });
+        if (!shouldRetry) {
+          throw wrapTransportError(err);
+        }
+        const delay = this._retry.computeDelay(attempt, {});
+        await sleep(delay);
+        attempt += 1;
+        continue;
+      }
+
+      if (response.status >= 200 && response.status < 300) {
+        return response;
+      }
+
+      // Non-2xx: decide whether to retry.
+      const shouldRetry = this._retry.shouldRetry(attempt, {
+        status: response.status,
+        method,
+      });
+      if (!shouldRetry) {
+        this._lastResponse = response;
+        throw await errorFromResponse(response);
+      }
+
+      const retryAfter = parseRetryAfter(response.headers.get("retry-after"));
+      const delay = this._retry.computeDelay(attempt, { retryAfter });
+      // Drain the response body so the socket can be reused.
+      try {
+        await response.text();
+      } catch {
+        /* no-op — best-effort drain */
+      }
+      await sleep(delay);
+      attempt += 1;
+    }
   }
 
   private async sendOnce(
@@ -352,6 +473,23 @@ async function errorFromResponse(response: Response): Promise<APIError> {
     }
   }
   return APIError.fromResponse(response, text, data);
+}
+
+/** Read a 2xx response body once and build a {@link RawResponse}. */
+async function rawFromResponse(response: Response): Promise<RawResponse> {
+  const buffer = await response.arrayBuffer();
+  const content = new Uint8Array(buffer);
+  const text = new TextDecoder().decode(content);
+  return {
+    statusCode: response.status,
+    content,
+    text,
+    contentType: response.headers.get("content-type") ?? "",
+    headers: headersToRecord(response.headers),
+    json(): unknown {
+      return JSON.parse(text);
+    },
+  };
 }
 
 function wrapTransportError(err: unknown): Error {

@@ -65,6 +65,31 @@ const past = await client.laws.atCommit("es", "ley_organica_3_2018", oldest);
 console.log(past.content_md); // Markdown at that revision
 ```
 
+### XML (and other raw formats)
+
+The typed methods always return JSON-parsed models. When your app speaks
+XML, use `requestRaw` to fetch any endpoint in another wire format via
+content negotiation — it sets `Accept` and hands you the body untouched:
+
+```ts
+const res = await client.requestRaw("GET", "/api/v1/es/laws/BOE-A-1978-31229");
+res.contentType;     // "application/xml; charset=utf-8"
+const xmlText = res.text;   // the raw XML string
+res.content;         // the raw bytes (Uint8Array)
+
+// format: "json" or any explicit media type works the same way:
+const data = (
+  await client.requestRaw("GET", "/api/v1/countries", { format: "json" })
+).json();
+```
+
+`requestRaw` defaults to `format: "xml"`. The SDK has **zero runtime
+dependencies and ships no XML parser** — parse `res.text` (or
+`res.content`) with your own library (`fast-xml-parser`,
+`@xmldom/xmldom`, …). Errors raise the same typed exceptions as the JSON
+methods (the error body is in the negotiated format). See the
+[Response formats](https://legalize.dev/docs/formats) docs.
+
 ### Abort + timeout
 
 Every method accepts a standard `AbortSignal`:

@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-17
+
+### Added
+
+- `requestRaw(method, path, options?)` on `Legalize` — the low-level
+  escape hatch for content negotiation. It fetches any endpoint in a
+  non-JSON wire format and returns a `RawResponse` (`.statusCode`,
+  `.content` as raw bytes, `.text`, `.contentType`, `.headers`) without
+  JSON-decoding. `options.format` controls the `Accept` header:
+  `"xml"` (the default) sends `application/xml`, `"json"` sends
+  `application/json`, and any other value is used verbatim as the media
+  type. Same retry policy, `lastResponse` population, and typed error
+  hierarchy as `request`.
+- `RawResponse` type, exported from the package, with a `.json()`
+  convenience parser. The SDK ships no XML parser and keeps zero runtime
+  dependencies — parse `.text`/`.content` with your own library.
+- `RequestRawOptions` type and the `formatToAccept` helper are exported.
+
+The typed resource methods still return JSON-parsed models; XML is opt-in
+per call via `requestRaw`. See the "Response formats" API docs.
+
 ## [0.1.0] — 2026-04-20
 
 ### Added

@@ -13,8 +13,14 @@
  * See https://legalize.dev/api/docs for the API reference.
  */
 
-export { Legalize, defaultUserAgent, buildQueryString } from "./client.js";
-export type { FetchImpl, LegalizeOptions, RequestOptions } from "./client.js";
+export { Legalize, defaultUserAgent, buildQueryString, formatToAccept } from "./client.js";
+export type {
+  FetchImpl,
+  LegalizeOptions,
+  RawResponse,
+  RequestOptions,
+  RequestRawOptions,
+} from "./client.js";
 
 export {
   DEFAULT_API_VERSION,
