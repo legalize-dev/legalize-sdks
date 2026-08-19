@@ -154,6 +154,22 @@ Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push
 - Node: `node/package.json` + `node/CHANGELOG.md`, tag `node-vX.Y.Z`.
 - Go: `go/version.go` + `go/CHANGELOG.md`, tag `go/vX.Y.Z` (the `go/` prefix is mandatory — Go's submodule resolver requires it).
 
+### Release traps
+
+- **Tag only after the PR is on `main`.** The tag is what publishes; tagging while the PR is
+  still open puts the tag on a commit whose version files still say the old number, and the
+  publish job aborts on the version check (it fails closed, so nothing reaches the registry —
+  delete the tag, land the PR, tag again).
+- **`main` is protected**: a squash merge needs an approving review, or `gh pr merge --admin`.
+- **ruff is unpinned** (`ruff>=0.6` in the dev extra) and CI runs `ruff format --check .` over the
+  whole tree, **markdown code blocks included**. A new ruff release can therefore fail lint on a
+  PR that never touched the offending file — 0.16 reformatted a README block from the XML PR.
+  Reformat and move on, or pin ruff if it becomes a recurring tax.
+- **The engine repo also installs a package called `legalize`.** Running `pytest` on this repo
+  from an environment that has the engine installed imports the wrong one and the conftest fails
+  with `cannot import name 'AsyncLegalize'`. Test from a venv with this SDK installed
+  (`pip install -e ".[dev]"`).
+
 SDK versions track the SDK, not the API. API version is negotiated per-request via `Legalize-API-Version` (default `v1`, overridable via `LEGALIZE_API_VERSION`).
 
 Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Pydantic majors are held back for manual migration. Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
