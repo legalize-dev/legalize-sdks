@@ -69,7 +69,7 @@ Python is the **reference implementation**. [`PARITY.md`](PARITY.md) is the cros
 
 `python/src/legalize/` is intentionally thin and transport-first:
 
-- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection (populated on success AND error).
+- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection (populated on success AND error). They also expose `request_raw(method, path, *, format="xml", ...)` → `RawResponse` (raw bytes/text + content-type) for content negotiation — the escape hatch to fetch any endpoint as XML without JSON-decoding (Node `requestRaw`, Go `RequestRaw` + `WithFormat`; see PARITY.md §12).
 - `_retry.py` — `RetryPolicy` (exponential backoff, honors `Retry-After` as both delta-seconds and HTTP-date). Resolved through `_resolve_retry_policy`: explicit `retry=` wins over `max_retries=`.
 - `_errors.py` — `APIError` hierarchy mapped by status code via `APIError.from_response`.
 - `_pagination.py` — offset-based pagination helpers used by list endpoints.

@@ -96,6 +96,7 @@ class Laws(_SyncResource):
         country: str,
         *,
         q: str,
+        page: int = 1,
         per_page: int = 50,
         law_type: str | _L[str] | None = None,
         year: int | None = None,
@@ -116,6 +117,7 @@ class Laws(_SyncResource):
             from_date=from_date,
             to_date=to_date,
             sort=sort,
+            page=page,
             per_page=per_page,
             q=q,
         )
@@ -141,6 +143,43 @@ class Laws(_SyncResource):
         def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
             resp = self.list(
                 country,
+                page=page,
+                per_page=per,
+                law_type=law_type,
+                year=year,
+                status=status,
+                jurisdiction=jurisdiction,
+                from_date=from_date,
+                to_date=to_date,
+                sort=sort,
+            )
+            return resp.results, resp.total
+
+        return iter(PageIterator(fetch, per_page=per_page, limit=limit))
+
+    def search_iter(
+        self,
+        country: str,
+        *,
+        q: str,
+        per_page: int = 100,
+        limit: int | None = None,
+        law_type: str | _L[str] | None = None,
+        year: int | None = None,
+        status: str | None = None,
+        jurisdiction: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        sort: str | None = None,
+    ) -> Iterator[LawSearchResult]:
+        """Auto-paginate across every match of a full-text search."""
+        if not q or not q.strip():
+            raise ValueError("q must be a non-empty search query")
+
+        def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
+            resp = self.search(
+                country,
+                q=q,
                 page=page,
                 per_page=per,
                 law_type=law_type,
@@ -212,6 +251,7 @@ class AsyncLaws(_AsyncResource):
         country: str,
         *,
         q: str,
+        page: int = 1,
         per_page: int = 50,
         law_type: str | _L[str] | None = None,
         year: int | None = None,
@@ -231,6 +271,7 @@ class AsyncLaws(_AsyncResource):
             from_date=from_date,
             to_date=to_date,
             sort=sort,
+            page=page,
             per_page=per_page,
             q=q,
         )
@@ -254,6 +295,43 @@ class AsyncLaws(_AsyncResource):
         async def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
             resp = await self.list(
                 country,
+                page=page,
+                per_page=per,
+                law_type=law_type,
+                year=year,
+                status=status,
+                jurisdiction=jurisdiction,
+                from_date=from_date,
+                to_date=to_date,
+                sort=sort,
+            )
+            return resp.results, resp.total
+
+        return AsyncPageIterator(fetch, per_page=per_page, limit=limit).__aiter__()
+
+    def search_iter(
+        self,
+        country: str,
+        *,
+        q: str,
+        per_page: int = 100,
+        limit: int | None = None,
+        law_type: str | _L[str] | None = None,
+        year: int | None = None,
+        status: str | None = None,
+        jurisdiction: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        sort: str | None = None,
+    ) -> AsyncIterator[LawSearchResult]:
+        """Auto-paginate across every match of a full-text search."""
+        if not q or not q.strip():
+            raise ValueError("q must be a non-empty search query")
+
+        async def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
+            resp = await self.search(
+                country,
+                q=q,
                 page=page,
                 per_page=per,
                 law_type=law_type,
