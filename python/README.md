@@ -48,6 +48,13 @@ for law in client.laws.iter(country="es", status="vigente"):
 
 # Full-text search
 results = client.laws.search(country="es", q="protección de datos")
+
+# ...page by page
+page2 = client.laws.search(country="es", q="protección de datos", page=2)
+
+# ...or every match, paginated for you
+for law in client.laws.search_iter(country="es", q="protección de datos"):
+    ...
 ```
 
 ### Time-travel
