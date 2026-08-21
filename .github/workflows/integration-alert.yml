@@ -1,0 +1,47 @@
+name: integration-alert
+
+# The integration workflows run on a schedule, so a failure only ever showed up
+# as a red mark nobody opens. They failed daily from 2026-08-11 to 2026-08-21
+# with a dead LEGALIZE_API_KEY and went unnoticed for three months. This turns
+# that silence into an issue.
+
+on:
+  workflow_run:
+    workflows: [python-integration, node-integration, go-integration]
+    types: [completed]
+
+permissions:
+  issues: write
+
+jobs:
+  alert:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open an issue if none is open yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          set -euo pipefail
+          gh label create integration-failure --repo "$REPO" \
+            --color d73a4a --description "Live SDK tests against prod are failing" \
+            2>/dev/null || true
+          open=$(gh issue list --repo "$REPO" --state open \
+            --label integration-failure --limit 1 --json number --jq '.[0].number // empty')
+          # ponytail: one open issue is the whole signal — no daily "still broken" comments
+          if [ -n "$open" ]; then
+            echo "Issue #$open already open, saying nothing."
+            exit 0
+          fi
+          gh issue create --repo "$REPO" --label integration-failure \
+            --title "Integration tests against prod are failing" \
+            --body "\`$WORKFLOW\` failed: $RUN_URL
+
+          The live SDK suites hit https://legalize.dev with \`LEGALIZE_API_KEY\`.
+          A 401 \`invalid_api_key\` means that secret is dead — rotate the key and
+          run \`gh secret set LEGALIZE_API_KEY --repo $REPO\`.
+
+          Close this issue once the suites are green; it will reopen on the next failure."
