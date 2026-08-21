@@ -54,6 +54,14 @@ updates:
       dev:
         dependency-type: development
         update-types: ["minor", "patch"]
+    ignore:
+      # The Node SDK ships zero runtime deps, so every npm entry here is dev
+      # tooling. Tooling majors (eslint 10, typescript 6, @types/node 25) need
+      # a manual migration and otherwise rot as red single-package PRs, so they
+      # are held back the same way pydantic is above. Security alerts still
+      # surface for these — only the automatic PR is suppressed.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: gomod
     directory: /go

@@ -140,7 +140,7 @@ Coverage target: 95% (enforced by `pyproject.toml [tool.coverage.report] fail_un
 | `node-ci.yml` | PR + push touching `node/**` or `openapi-sdk.json` | Lint (ESLint flat config) + typecheck + matrix test (Node 20 / 22) + tsup build smoke test |
 | `node-integration.yml` | Daily 05:15 UTC + manual | Live integration against prod via dedicated `vitest.integration.config.ts` |
 | `node-publish.yml` | Tag `node-v*` push | Verify → test → `npm publish --provenance` (sigstore) → GitHub Release |
-| `go-ci.yml` | PR + push touching `go/**` or `openapi-sdk.json` | `go vet` + `gofmt` + `golangci-lint v2` + matrix `go test -race` (Go 1.22 / 1.23 / 1.24) |
+| `go-ci.yml` | PR + push touching `go/**` or `openapi-sdk.json` | `go vet` + `gofmt` + `golangci-lint v2` + matrix `go test -race` (Go 1.23 / 1.24) |
 | `go-integration.yml` | Daily 05:30 UTC + manual | `go test -tags=integration -race` against prod |
 | `go-publish.yml` | Tag `go/v*` push | Verify → test → GitHub Release → warm `proxy.golang.org` (no registry upload — Go modules resolve from the tag) |
 | `openapi-sync.yml` | Daily 06:00 UTC + manual | Fetch + filter spec, regenerate models, open auto PR on diff |
@@ -172,13 +172,13 @@ Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push
 
 SDK versions track the SDK, not the API. API version is negotiated per-request via `Legalize-API-Version` (default `v1`, overridable via `LEGALIZE_API_VERSION`).
 
-Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Pydantic majors are held back for manual migration. Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
+Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Majors are held back for manual migration: pydantic in pip, and every npm entry (the Node SDK has zero runtime deps, so npm is all dev tooling). Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
 
 ## Conventions
 
 - Python ≥ 3.10, `mypy --strict` on `src/`, ruff line length 100, `from __future__ import annotations` everywhere. Tests allow `S105/S106/S311`; generated models ignore `N815/UP`.
 - Node ≥ 20, TypeScript 5.4+, strict mode, ESLint flat config, ESM + CJS dual build via tsup, zero runtime deps.
-- Go ≥ 1.22 (matrix tests 1.22/1.23/1.24), stdlib only, `context.Context` first on every I/O, functional options. golangci-lint config is v2 schema (run via `golangci/golangci-lint-action@v9`).
+- Go ≥ 1.23 (`go.mod`; matrix tests 1.23/1.24), stdlib only, `context.Context` first on every I/O, functional options. golangci-lint config is v2 schema (run via `golangci/golangci-lint-action@v9`).
 - All code, identifiers, commit messages in English (per workspace convention in the parent `legalize/CLAUDE.md`).
 - Sync and async APIs must stay symmetric — same resource method names, same error types, same kwargs.
 - Every SDK-surface change must keep PARITY.md in sync. Changing a method signature in Python requires the same change across Node and Go.

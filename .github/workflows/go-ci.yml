@@ -1,7 +1,7 @@
 name: go-ci
 
-# vet + gofmt + golangci-lint + matrix `go test -race` (1.22, 1.23,
-# 1.24) for the Go submodule at `go/` (published as
+# vet + gofmt + golangci-lint + matrix `go test -race` (1.23, 1.24)
+# for the Go submodule at `go/` (published as
 # `github.com/legalize-dev/legalize-sdks/go`).
 
 on:
@@ -60,7 +60,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ["1.22", "1.23", "1.24"]
+        # go.mod requires 1.23; setup-go v6 stopped auto-upgrading the
+        # toolchain, so a "1.22" entry fails outright instead of silently
+        # running 1.23+ as it did under v5.
+        go-version: ["1.23", "1.24"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
