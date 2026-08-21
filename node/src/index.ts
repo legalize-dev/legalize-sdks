@@ -83,6 +83,7 @@ export type {
   HTTPValidationError,
   JurisdictionInfo,
   LawAtCommitResponse,
+  LawAtDateResponse,
   LawDetail,
   LawFilterOptions,
   LawIterOptions,

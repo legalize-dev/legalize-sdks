@@ -8,6 +8,7 @@ Covers:
 - ``meta``                     — metadata only (fast)
 - ``commits``                  — git commit history
 - ``at_commit``                — time-travel to a specific SHA
+- ``at_date``                  — time-travel to a date, SHA resolved for you
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from legalize._pagination import AsyncPageIterator, PageIterator
 from legalize.models import (
     CommitsResponse,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     LawSearchResult,
@@ -216,6 +218,27 @@ class Laws(_SyncResource):
         data = self._client.request("GET", f"{API}/{country}/laws/{law_id}/at/{sha}")
         return LawAtCommitResponse.model_validate(data)
 
+    def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
+        """Return the law's full text as published on or before ``date``.
+
+        The server resolves the date to a version, so callers do not have to
+        walk :meth:`commits` looking for a SHA. The response carries the
+        resolved ``sha`` and ``version_date`` so the answer stays verifiable.
+
+        The rule is *published on or before* ``date``, not *in force on* it:
+        the dates are official publication dates, so a reform still inside its
+        vacatio legis resolves as already applying. Cite accordingly.
+
+        Args:
+            country: Country code, e.g. ``"es"``.
+            law_id: Official identifier, e.g. ``"BOE-A-2003-23186"``.
+            date: Point in time as ``YYYY-MM-DD``.
+        """
+        data = self._client.request(
+            "GET", f"{API}/{country}/laws/{law_id}/at", params={"date": date}
+        )
+        return LawAtDateResponse.model_validate(data)
+
 
 class AsyncLaws(_AsyncResource):
     async def list(
@@ -361,6 +384,16 @@ class AsyncLaws(_AsyncResource):
     async def at_commit(self, country: str, law_id: str, sha: str) -> LawAtCommitResponse:
         data = await self._client.request("GET", f"{API}/{country}/laws/{law_id}/at/{sha}")
         return LawAtCommitResponse.model_validate(data)
+
+    async def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
+        """Return the law's full text as published on or before ``date``.
+
+        Async twin of :meth:`Laws.at_date`.
+        """
+        data = await self._client.request(
+            "GET", f"{API}/{country}/laws/{law_id}/at", params={"date": date}
+        )
+        return LawAtDateResponse.model_validate(data)
 
 
 __all__ = ["AsyncLaws", "Laws"]

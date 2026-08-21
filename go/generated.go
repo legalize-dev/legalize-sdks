@@ -39,6 +39,20 @@ type LawAtCommitResponse struct {
 	ContentMD string `json:"content_md"`
 }
 
+// LawAtDateResponse is the return payload of laws.at_date: a law as it stood
+// on a date, plus what that answer actually resolved to.
+//
+// SHA and VersionDate are pointers because a date before the law existed is a
+// valid answer with no version behind it — nil there means "nothing had been
+// published yet", which is not the same as an empty text.
+type LawAtDateResponse struct {
+	LawID       string  `json:"law_id"`
+	Date        string  `json:"date"`
+	SHA         *string `json:"sha"`
+	VersionDate *string `json:"version_date"`
+	ContentMD   string  `json:"content_md"`
+}
+
 // LawDetail is a full law with Markdown content.
 type LawDetail struct {
 	ID              string         `json:"id"`

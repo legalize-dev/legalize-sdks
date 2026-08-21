@@ -148,6 +148,23 @@ func (s *LawsService) AtCommit(ctx context.Context, country, lawID, sha string) 
 	return &out, nil
 }
 
+// AtDate returns the law's full text as published on or before date
+// (YYYY-MM-DD). The server resolves the date to a version, so callers need not
+// walk Commits looking for a SHA; the resolved SHA and VersionDate come back
+// with the text so the answer stays verifiable.
+//
+// The rule is "published on or before" date, not "in force on" it: the dates
+// are official publication dates, so a reform still inside its vacatio legis
+// resolves as already applying. Cite accordingly.
+func (s *LawsService) AtDate(ctx context.Context, country, lawID, date string) (*LawAtDateResponse, error) {
+	var out LawAtDateResponse
+	if err := s.client.requestJSON(ctx, http.MethodGet, API+"/"+country+"/laws/"+lawID+"/at",
+		[]RequestOption{WithParams(map[string]any{"date": date})}, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 func cloneLawsOpts(opts *LawsListOptions) *LawsListOptions {
 	if opts == nil {
 		return &LawsListOptions{}

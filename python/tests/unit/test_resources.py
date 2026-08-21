@@ -12,6 +12,7 @@ from legalize.models import (
     CountryInfo,
     JurisdictionInfo,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     PaginatedLaws,
@@ -245,6 +246,44 @@ class TestLaws:
         out = client.laws.at_commit("es", "x", "abc1234")
         assert received["request"].url.path == "/api/v1/es/laws/x/at/abc1234"
         assert isinstance(out, LawAtCommitResponse)
+
+    def test_at_date(self, client, handler):
+        """The date travels as a query param, not a path segment.
+
+        `/at/{sha}` and `/at?date=` are one operation with two addresses, so
+        the date form must not accidentally be routed as a SHA.
+        """
+        received = capture(
+            handler,
+            body={
+                "law_id": "x",
+                "date": "2012-09-20",
+                "sha": "abc1234",
+                "version_date": "2011-09-27",
+                "content_md": "# As published by then",
+            },
+        )
+        out = client.laws.at_date("es", "x", "2012-09-20")
+        assert received["request"].url.path == "/api/v1/es/laws/x/at"
+        assert received["request"].url.params["date"] == "2012-09-20"
+        assert isinstance(out, LawAtDateResponse)
+        assert out.version_date == "2011-09-27"
+
+    def test_at_date_surfaces_no_version_as_null_sha(self, client, handler):
+        """A date before the law existed is an answer, not an error."""
+        capture(
+            handler,
+            body={
+                "law_id": "x",
+                "date": "1800-01-01",
+                "sha": None,
+                "version_date": None,
+                "content_md": "",
+            },
+        )
+        out = client.laws.at_date("es", "x", "1800-01-01")
+        assert out.sha is None
+        assert out.content_md == ""
 
 
 # ---- reforms -----------------------------------------------------------

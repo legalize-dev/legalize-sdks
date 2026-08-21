@@ -200,7 +200,7 @@ describe("laws.searchIter", () => {
   });
 });
 
-describe("laws.retrieve / meta / commits / atCommit", () => {
+describe("laws.retrieve / meta / commits / atCommit / atDate", () => {
   it("retrieve", async () => {
     const { client, calls } = buildClient({ ...LAW_META, content_md: "# body" });
     const out = await client.laws.retrieve("es", "ley_organica_3_2018");
@@ -229,6 +229,31 @@ describe("laws.retrieve / meta / commits / atCommit", () => {
     });
     await client.laws.atCommit("es", "x", "abc1234");
     expect(calls[0]!.url.pathname).toBe("/api/v1/es/laws/x/at/abc1234");
+  });
+  it("atDate sends the date as a query param, not a path segment", async () => {
+    const { client, calls } = buildClient({
+      law_id: "x",
+      date: "2012-09-20",
+      sha: "abc1234",
+      version_date: "2011-09-27",
+      content_md: "# as published by then",
+    });
+    const out = await client.laws.atDate("es", "x", "2012-09-20");
+    expect(calls[0]!.url.pathname).toBe("/api/v1/es/laws/x/at");
+    expect(calls[0]!.url.searchParams.get("date")).toBe("2012-09-20");
+    expect(out.version_date).toBe("2011-09-27");
+  });
+  it("atDate surfaces 'no version at that date' as a null sha", async () => {
+    const { client } = buildClient({
+      law_id: "x",
+      date: "1800-01-01",
+      sha: null,
+      version_date: null,
+      content_md: "",
+    });
+    const out = await client.laws.atDate("es", "x", "1800-01-01");
+    expect(out.sha).toBeNull();
+    expect(out.content_md).toBe("");
   });
 });
 

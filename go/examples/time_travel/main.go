@@ -55,4 +55,17 @@ func main() {
 		content = content[:500] + "..."
 	}
 	fmt.Println(content)
+
+	// The same thing without knowing any SHA: ask by date and let the server
+	// resolve it. VersionDate tells you which version actually answered.
+	at, err := client.Laws().AtDate(ctx, "es", lawID, "2019-05-13")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if at.SHA == nil {
+		fmt.Println("\nNothing had been published by that date.")
+		return
+	}
+	fmt.Printf("\n--- On 2019-05-13: version %s published %s ---\n",
+		(*at.SHA)[:7], *at.VersionDate)
 }

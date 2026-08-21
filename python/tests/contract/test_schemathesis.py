@@ -101,6 +101,7 @@ ENDPOINT_TO_SDK = {
     ("GET", "/api/v1/{country}/laws/{law_id}/reforms"): ("reforms", "list"),
     ("GET", "/api/v1/{country}/laws/{law_id}/commits"): ("laws", "commits"),
     ("GET", "/api/v1/{country}/laws/{law_id}/at/{sha}"): ("laws", "at_commit"),
+    ("GET", "/api/v1/{country}/laws/{law_id}/at"): ("laws", "at_date"),
     ("GET", "/api/v1/{country}/stats"): ("stats", "retrieve"),
     ("POST", "/api/v1/webhooks"): ("webhooks", "create"),
     ("GET", "/api/v1/webhooks"): ("webhooks", "list"),

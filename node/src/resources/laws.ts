@@ -8,6 +8,7 @@
  *   - `meta` — metadata only (fast, no GitHub fetch)
  *   - `commits` — git commit history
  *   - `atCommit` — time-travel to a specific SHA
+ *   - `atDate` — time-travel to a date, SHA resolved server-side
  */
 
 import type { Legalize } from "../client.js";
@@ -15,6 +16,7 @@ import { PageIterator } from "../pagination.js";
 import type {
   CommitsResponse,
   LawAtCommitResponse,
+  LawAtDateResponse,
   LawDetail,
   LawIterOptions,
   LawListOptions,
@@ -185,6 +187,35 @@ export class Laws {
       "GET",
       `${API}/${country}/laws/${lawId}/at/${sha}`,
       { ...(options.signal ? { signal: options.signal } : {}) },
+    );
+  }
+
+  /**
+   * Return the law's full text as published on or before `date`.
+   *
+   * The server resolves the date to a version, so callers need not walk
+   * {@link commits} looking for a SHA. The response carries the resolved
+   * `sha` and `versionDate` so the answer stays verifiable.
+   *
+   * The rule is *published on or before* `date`, not *in force on* it: the
+   * dates are official publication dates, so a reform still inside its
+   * vacatio legis resolves as already applying. Cite accordingly.
+   *
+   * @param date - Point in time as `YYYY-MM-DD`.
+   */
+  async atDate(
+    country: string,
+    lawId: string,
+    date: string,
+    options: { signal?: AbortSignal } = {},
+  ): Promise<LawAtDateResponse> {
+    return this.client.request<LawAtDateResponse>(
+      "GET",
+      `${API}/${country}/laws/${lawId}/at`,
+      {
+        params: { date },
+        ...(options.signal ? { signal: options.signal } : {}),
+      },
     );
   }
 }

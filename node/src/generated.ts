@@ -246,6 +246,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/{country}/laws/{law_id}/at": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Api Law At Date
+         * @description Time-travel by date: the text of a law as published on or before `date`.
+         *
+         *     Resolves the date to a version server-side, so callers do not have to walk
+         *     `/commits` looking for a SHA. The resolved `sha` and `version_date` come
+         *     back with the text so the answer stays verifiable.
+         *
+         *     The rule is **published on or before** the date, not "in force on" it: the
+         *     dates are official publication dates, so a reform still within its vacatio
+         *     legis resolves as already applying. Cite accordingly.
+         */
+        get: operations["api_law_at_date_api_v1__country__laws__law_id__at_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/{country}/laws/{law_id}/at/{sha}": {
         parameters: {
             query?: never;
@@ -396,6 +424,26 @@ export interface components {
             law_id: string;
             /** Sha */
             sha: string;
+        };
+        /**
+         * LawAtDateResponse
+         * @description A law as it stood on a date, plus what that answer actually resolved to.
+         *
+         *     ``sha`` and ``version_date`` are returned so the caller can verify the
+         *     answer and cite the exact version, rather than trusting the date they
+         *     asked for.
+         */
+        LawAtDateResponse: {
+            /** Content Md */
+            content_md: string;
+            /** Date */
+            date: string;
+            /** Law Id */
+            law_id: string;
+            /** Sha */
+            sha: string | null;
+            /** Version Date */
+            version_date: string | null;
         };
         /**
          * LawDetail
@@ -653,6 +701,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CountryInfo"][];
+                    "application/xml": components["schemas"]["CountryInfo"][];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -687,6 +736,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -725,6 +775,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -741,6 +792,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -770,6 +822,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -786,6 +839,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -815,6 +869,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -831,6 +886,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -864,6 +920,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -880,6 +937,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -912,6 +970,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -928,6 +987,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -958,6 +1018,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -974,6 +1035,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1003,6 +1065,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                    "application/xml": unknown;
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1019,6 +1082,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1048,6 +1112,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JurisdictionInfo"][];
+                    "application/xml": components["schemas"]["JurisdictionInfo"][];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1064,6 +1129,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1093,6 +1159,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": string[];
+                    "application/xml": string[];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1109,6 +1176,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1157,6 +1225,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedLaws"];
+                    "application/xml": components["schemas"]["PaginatedLaws"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1173,6 +1242,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1203,6 +1273,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LawDetail"];
+                    "application/xml": components["schemas"]["LawDetail"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1219,6 +1290,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Monthly quota exceeded. Includes Retry-After header. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    api_law_at_date_api_v1__country__laws__law_id__at_get: {
+        parameters: {
+            query: {
+                /** @description Point in time, YYYY-MM-DD */
+                date: string;
+            };
+            header?: never;
+            path: {
+                country: string;
+                law_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LawAtDateResponse"];
+                    "application/xml": components["schemas"]["LawAtDateResponse"];
+                };
+            };
+            /** @description Missing, malformed, or invalid API key */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1250,6 +1373,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LawAtCommitResponse"];
+                    "application/xml": components["schemas"]["LawAtCommitResponse"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1266,6 +1390,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1296,6 +1421,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CommitsResponse"];
+                    "application/xml": components["schemas"]["CommitsResponse"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1312,6 +1438,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1342,6 +1469,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LawMeta"];
+                    "application/xml": components["schemas"]["LawMeta"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1358,6 +1486,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1391,6 +1520,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReformsResponse"];
+                    "application/xml": components["schemas"]["ReformsResponse"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1407,6 +1537,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */
@@ -1438,6 +1569,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatsResponse"];
+                    "application/xml": components["schemas"]["StatsResponse"];
                 };
             };
             /** @description Missing, malformed, or invalid API key */
@@ -1454,6 +1586,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/xml": components["schemas"]["HTTPValidationError"];
                 };
             };
             /** @description Monthly quota exceeded. Includes Retry-After header. */

@@ -45,6 +45,7 @@ without opening an RFC and updating this document.
 | Law metadata only | GET | `/api/v1/{country}/laws/{id}/meta` | `laws.meta(country, law_id)` |
 | Commit history | GET | `/api/v1/{country}/laws/{id}/commits` | `laws.commits(country, law_id)` |
 | Law at commit | GET | `/api/v1/{country}/laws/{id}/at/{sha}` | `laws.at_commit(country, law_id, sha)` |
+| Law at date | GET | `/api/v1/{country}/laws/{id}/at?date=` | `laws.at_date(country, law_id, date)` |
 | Reforms for a law | GET | `/api/v1/{country}/laws/{id}/reforms` | `reforms.list(country, law_id)` |
 | Country stats | GET | `/api/v1/{country}/stats` | `stats.retrieve(country)` |
 | Create webhook | POST | `/api/v1/webhooks` | `webhooks.create(url, events, ...)` |
@@ -65,8 +66,8 @@ Convenience methods layered on top (optional but recommended):
 - `webhooks.deliveries_iter(...)` — lazy pagination over deliveries.
 
 Language idioms adapt the naming: Python uses snake_case (`at_commit`),
-Node uses camelCase (`atCommit`), Go uses PascalCase on exported
-methods (`AtCommit`). The **semantics stay identical**.
+Node uses camelCase (`atCommit`, `atDate`), Go uses PascalCase on exported
+methods (`AtCommit`, `AtDate`). The **semantics stay identical**.
 
 ---
 
@@ -124,6 +125,16 @@ semantic behaviour.
 - `laws.meta(country, law_id)` → `LawMeta` (no content; fast)
 - `laws.commits(country, law_id)` → `CommitsResponse`
 - `laws.at_commit(country, law_id, sha)` → `LawAtCommitResponse`
+- `laws.at_date(country, law_id, date)` → `LawAtDateResponse`
+
+  `at` is one operation with two addresses: a SHA names a version exactly, a
+  date is resolved to one server-side. The response carries the resolved `sha`
+  and `version_date` so the answer stays verifiable. The rule is **published on
+  or before** the date, not *in force on* it — the dates are official
+  publication dates, so a reform inside its vacatio legis resolves as already
+  applying. Where the language has nullable types (Go `*string`), `sha` and
+  `version_date` are nullable: a date before the law existed is a valid answer
+  with no version behind it.
 
 ### reforms
 
