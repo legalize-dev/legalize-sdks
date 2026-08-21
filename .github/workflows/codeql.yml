@@ -37,6 +37,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # main's required status checks name these JOBS — "Analyze (python)",
+        # "Analyze (actions)" — not this workflow. Requiring "codeql" (the
+        # workflow name) waits on a check nobody publishes, which left every
+        # PR permanently BLOCKED until 2026-08-21. Add a language here and
+        # the branch protection needs its context added too.
         language: [python, actions]
     steps:
       - uses: actions/checkout@v4
