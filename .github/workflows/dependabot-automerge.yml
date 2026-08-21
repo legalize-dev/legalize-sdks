@@ -1,8 +1,8 @@
 name: dependabot-automerge
 
-# Auto-approves and queues auto-merge on Dependabot PRs that are
-# minor-version or patch-version bumps. Major bumps are left open for
-# manual review.
+# Queues auto-merge on Dependabot PRs that are minor-version or
+# patch-version bumps. Major bumps are left open for manual review —
+# npm majors never even reach here, dependabot.yml ignores them.
 #
 # Auto-merge fires only after branch protection is satisfied:
 #   - required status checks pass (codeql + branch up to date)
@@ -35,12 +35,11 @@ jobs:
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Approve PR
-        if: steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr review --approve "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # No approve step: branch protection requires 0 approving reviews, and
+      # `gh pr review --approve` fails outright under GITHUB_TOKEN anyway
+      # ("GitHub Actions is not permitted to approve pull requests"), which
+      # aborted this job before it ever reached the merge step. That is why
+      # every Dependabot PR sat open instead of auto-merging.
       - name: Enable auto-merge
         if: steps.meta.outputs.update-type == 'version-update:semver-minor' || steps.meta.outputs.update-type == 'version-update:semver-patch'
         run: gh pr merge --auto --squash "$PR_URL"
