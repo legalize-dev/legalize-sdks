@@ -23,6 +23,7 @@ from legalize.models import (
     CountryInfo,
     JurisdictionInfo,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     PaginatedLaws,
@@ -136,7 +137,8 @@ class TestLawsRetrieve:
     # We look up its real ID dynamically so the test survives ID rewrites.
 
     @pytest.fixture(scope="class")
-    def stable_law_id(self, api_key, base_url):
+    @classmethod
+    def stable_law_id(cls, api_key, base_url):
         with Legalize(api_key=api_key, base_url=base_url) as client:
             page = client.laws.list("es", law_type="constitucion", per_page=1)
             if not page.results:
@@ -169,7 +171,8 @@ class TestLawsRetrieve:
 
 class TestLawHistory:
     @pytest.fixture(scope="class")
-    def reformed_law(self, api_key, base_url):
+    @classmethod
+    def reformed_law(cls, api_key, base_url):
         """A law with ≥1 reform so history tests have something to verify.
 
         Uses ``stats.most_reformed_laws`` which is sorted by reform
@@ -203,6 +206,55 @@ class TestLawHistory:
         # Content at an old commit may be empty in edge cases, but the
         # shape must be right.
         assert isinstance(snapshot.content_md, str)
+
+    def test_at_date_agrees_with_at_commit(self, client: Legalize, reformed_law: str):
+        """The real cross-check, impossible against the mock store.
+
+        Unit tests stub `get_law_at_commit` to ignore the SHA it is handed, so
+        only production can prove the date form and the SHA form return the
+        same bytes.
+        """
+        commits = client.laws.commits("es", reformed_law)
+        newest = commits.commits[0]
+
+        by_date = client.laws.at_date("es", reformed_law, newest.date)
+
+        assert isinstance(by_date, LawAtDateResponse)
+        assert by_date.sha == newest.sha
+        assert by_date.version_date == newest.date
+        assert (
+            by_date.content_md == client.laws.at_commit("es", reformed_law, newest.sha).content_md
+        )
+
+    def test_at_date_between_reforms_picks_the_earlier_one(
+        self, client: Legalize, reformed_law: str
+    ):
+        """A date no commit landed on still resolves — the point of the feature."""
+        commits = client.laws.commits("es", reformed_law)
+        if len(commits.commits) < 2:
+            pytest.skip("law has a single version; nothing to resolve between")
+        older = commits.commits[-1]
+
+        # The day before the next reform must still resolve to the older one.
+        newer = commits.commits[-2]
+        if newer.date == older.date:
+            pytest.skip("adjacent versions share a publication date")
+
+        at = client.laws.at_date("es", reformed_law, older.date)
+        assert at.version_date == older.date
+        assert at.version_date <= newer.date
+
+    def test_at_date_before_the_law_existed_has_no_version(
+        self, client: Legalize, reformed_law: str
+    ):
+        """Not an error: a valid answer with nothing behind it."""
+        at = client.laws.at_date("es", reformed_law, "1500-01-01")
+        assert at.sha is None
+        assert at.content_md == ""
+
+    def test_at_date_rejects_a_malformed_date(self, client: Legalize, reformed_law: str):
+        with pytest.raises(InvalidRequestError):
+            client.laws.at_date("es", reformed_law, "20-01-2000")
 
     def test_reforms_list(self, client: Legalize, reformed_law: str):
         resp = client.reforms.list("es", reformed_law, limit=10)

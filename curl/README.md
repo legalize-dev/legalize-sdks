@@ -53,6 +53,10 @@ error envelope.
 ```bash
 SHA=$(legalize https://legalize.dev/api/v1/es/laws/ley_organica_3_2018/commits | jq -r '.commits[-1].sha')
 legalize "https://legalize.dev/api/v1/es/laws/ley_organica_3_2018/at/$SHA" | jq -r .content_md
+
+# Or by date — the server resolves it to a version and tells you which one.
+legalize "https://legalize.dev/api/v1/es/laws/ley_organica_3_2018/at?date=2019-05-13" \
+  | jq '{sha, version_date}'
 ```
 
 ## Verify a webhook (bash)

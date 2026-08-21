@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "legalize"
-version = "0.2.0"
+version = "0.3.0"
 description = "Official Python client for the Legalize API"
 readme = "README.md"
 license = { file = "LICENSE" }

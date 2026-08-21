@@ -12,6 +12,7 @@ from legalize.models import (
     CountryInfo,
     JurisdictionInfo,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     PaginatedLaws,
@@ -127,6 +128,37 @@ class TestLaws:
         assert q["page"] == "1"
         assert q["per_page"] == "50"
 
+    def test_search_sends_page(self, client, handler):
+        received = capture(
+            handler,
+            body={"country": "es", "total": 120, "page": 3, "per_page": 50, "results": []},
+        )
+        client.laws.search("es", q="vivienda", page=3)
+
+        q = dict(received["request"].url.params)
+        assert q["page"] == "3"
+        assert q["q"] == "vivienda"
+
+    def test_search_iter_walks_every_page(self, client, handler):
+        pages: list[str] = []
+
+        def h(req: httpx.Request) -> httpx.Response:
+            params = dict(req.url.params)
+            pages.append(params["page"])
+            page = int(params["page"])
+            results = [dict(LAW_META, id=f"law-{page}-{i}") for i in range(2)]
+            return _json(
+                req,
+                200,
+                {"country": "es", "total": 4, "page": page, "per_page": 2, "results": results},
+            )
+
+        handler[0] = h
+        found = list(client.laws.search_iter("es", q="vivienda", per_page=2))
+
+        assert [law.id for law in found] == ["law-1-0", "law-1-1", "law-2-0", "law-2-1"]
+        assert pages == ["1", "2"]
+
     def test_search_requires_q(self, client):
         with pytest.raises(ValueError, match="q must be"):
             client.laws.search("es", q="")
@@ -214,6 +246,44 @@ class TestLaws:
         out = client.laws.at_commit("es", "x", "abc1234")
         assert received["request"].url.path == "/api/v1/es/laws/x/at/abc1234"
         assert isinstance(out, LawAtCommitResponse)
+
+    def test_at_date(self, client, handler):
+        """The date travels as a query param, not a path segment.
+
+        `/at/{sha}` and `/at?date=` are one operation with two addresses, so
+        the date form must not accidentally be routed as a SHA.
+        """
+        received = capture(
+            handler,
+            body={
+                "law_id": "x",
+                "date": "2012-09-20",
+                "sha": "abc1234",
+                "version_date": "2011-09-27",
+                "content_md": "# As published by then",
+            },
+        )
+        out = client.laws.at_date("es", "x", "2012-09-20")
+        assert received["request"].url.path == "/api/v1/es/laws/x/at"
+        assert received["request"].url.params["date"] == "2012-09-20"
+        assert isinstance(out, LawAtDateResponse)
+        assert out.version_date == "2011-09-27"
+
+    def test_at_date_surfaces_no_version_as_null_sha(self, client, handler):
+        """A date before the law existed is an answer, not an error."""
+        capture(
+            handler,
+            body={
+                "law_id": "x",
+                "date": "1800-01-01",
+                "sha": None,
+                "version_date": None,
+                "content_md": "",
+            },
+        )
+        out = client.laws.at_date("es", "x", "1800-01-01")
+        assert out.sha is None
+        assert out.content_md == ""
 
 
 # ---- reforms -----------------------------------------------------------

@@ -48,6 +48,13 @@ for law in client.laws.iter(country="es", status="vigente"):
 
 # Full-text search
 results = client.laws.search(country="es", q="protección de datos")
+
+# ...page by page
+page2 = client.laws.search(country="es", q="protección de datos", page=2)
+
+# ...or every match, paginated for you
+for law in client.laws.search_iter(country="es", q="protección de datos"):
+    ...
 ```
 
 ### Time-travel
@@ -64,6 +71,15 @@ past = client.laws.at_commit(
 print(past.content)  # Markdown at that revision
 ```
 
+Or skip the SHA lookup entirely and ask by date:
+
+```python
+at = client.laws.at_date(country="es", law_id="ley_organica_3_2018", date="2019-05-13")
+print(at.sha, at.version_date)  # which version answered, so you can cite it
+```
+
+The rule is *published on or before* the date, not *in force on* it.
+
 ### XML (and other raw formats)
 
 The typed methods always return JSON-parsed models. When your app speaks
@@ -72,9 +88,9 @@ content negotiation — it sets `Accept` and hands you the body untouched:
 
 ```python
 res = client.request_raw("GET", "/api/v1/es/laws/BOE-A-1978-31229")
-res.content_type        # "application/xml; charset=utf-8"
-xml_text = res.text     # the raw XML string
-root = res.xml()        # parsed into an ElementTree element
+res.content_type  # "application/xml; charset=utf-8"
+xml_text = res.text  # the raw XML string
+root = res.xml()  # parsed into an ElementTree element
 
 # format="json" or any explicit media type works the same way:
 data = client.request_raw("GET", "/api/v1/countries", format="json").json()
@@ -91,11 +107,13 @@ format). See the
 import asyncio
 from legalize import AsyncLegalize
 
+
 async def main():
     async with AsyncLegalize(api_key="leg_...") as client:
         page = await client.laws.list(country="es")
         async for law in client.laws.iter(country="fr"):
             print(law.id)
+
 
 asyncio.run(main())
 ```
@@ -109,7 +127,7 @@ from legalize import Webhook, WebhookVerificationError
 
 try:
     event = Webhook.verify(
-        payload=request.body,                              # raw bytes
+        payload=request.body,  # raw bytes
         sig_header=request.headers["X-Legalize-Signature"],
         timestamp=request.headers["X-Legalize-Timestamp"],
         secret=os.environ["LEGALIZE_WHSEC"],
@@ -140,7 +158,7 @@ export LEGALIZE_API_VERSION=v1
 ```python
 from legalize import Legalize
 
-client = Legalize()   # picks everything up from the environment
+client = Legalize()  # picks everything up from the environment
 ```
 
 ### Explicit
@@ -151,7 +169,7 @@ from legalize import Legalize, RetryPolicy
 client = Legalize(
     api_key="leg_...",
     base_url="https://legalize.dev",
-    api_version="v1",              # negotiated via Legalize-API-Version
+    api_version="v1",  # negotiated via Legalize-API-Version
     timeout=30.0,
     retry=RetryPolicy(max_retries=5, initial_delay=0.5, max_delay=10.0),
     default_headers={"X-Correlation-Id": "..."},
@@ -177,15 +195,15 @@ about and let the rest bubble:
 
 ```python
 from legalize import (
-    AuthenticationError,   # 401 — bad/missing key
-    ForbiddenError,        # 403
-    NotFoundError,         # 404
-    InvalidRequestError,   # 400
-    ValidationError,       # 422
-    RateLimitError,        # 429 — retried automatically by default
-    ServerError,           # 5xx
-    APIConnectionError,    # network failure
-    APITimeoutError,       # timeout
+    AuthenticationError,  # 401 — bad/missing key
+    ForbiddenError,  # 403
+    NotFoundError,  # 404
+    InvalidRequestError,  # 400
+    ValidationError,  # 422
+    RateLimitError,  # 429 — retried automatically by default
+    ServerError,  # 5xx
+    APIConnectionError,  # network failure
+    APITimeoutError,  # timeout
     WebhookVerificationError,
 )
 ```

@@ -43,6 +43,7 @@ func TestContract_EveryOperationHasAMethod(t *testing.T) {
 		"GET /api/v1/{country}/laws/{law_id}/meta":     true,
 		"GET /api/v1/{country}/laws/{law_id}/commits":  true,
 		"GET /api/v1/{country}/laws/{law_id}/at/{sha}": true,
+		"GET /api/v1/{country}/laws/{law_id}/at":       true,
 		"GET /api/v1/{country}/laws/{law_id}/reforms":  true,
 		// stats
 		"GET /api/v1/{country}/stats": true,

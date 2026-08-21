@@ -35,6 +35,22 @@ class LawAtCommitResponse(BaseModel):
     sha: str = Field(..., title="Sha")
 
 
+class LawAtDateResponse(BaseModel):
+    """
+    A law as it stood on a date, plus what that answer actually resolved to.
+
+    ``sha`` and ``version_date`` are returned so the caller can verify the
+    answer and cite the exact version, rather than trusting the date they
+    asked for.
+    """
+
+    content_md: str = Field(..., title="Content Md")
+    date: str = Field(..., title="Date")
+    law_id: str = Field(..., title="Law Id")
+    sha: str | None = Field(..., title="Sha")
+    version_date: str | None = Field(..., title="Version Date")
+
+
 class LawDetail(BaseModel):
     """
     Full law with Markdown content (fetched from GitHub).

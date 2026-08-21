@@ -8,6 +8,7 @@ Covers:
 - ``meta``                     — metadata only (fast)
 - ``commits``                  — git commit history
 - ``at_commit``                — time-travel to a specific SHA
+- ``at_date``                  — time-travel to a date, SHA resolved for you
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from legalize._pagination import AsyncPageIterator, PageIterator
 from legalize.models import (
     CommitsResponse,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     LawSearchResult,
@@ -96,6 +98,7 @@ class Laws(_SyncResource):
         country: str,
         *,
         q: str,
+        page: int = 1,
         per_page: int = 50,
         law_type: str | _L[str] | None = None,
         year: int | None = None,
@@ -116,6 +119,7 @@ class Laws(_SyncResource):
             from_date=from_date,
             to_date=to_date,
             sort=sort,
+            page=page,
             per_page=per_page,
             q=q,
         )
@@ -155,6 +159,43 @@ class Laws(_SyncResource):
 
         return iter(PageIterator(fetch, per_page=per_page, limit=limit))
 
+    def search_iter(
+        self,
+        country: str,
+        *,
+        q: str,
+        per_page: int = 100,
+        limit: int | None = None,
+        law_type: str | _L[str] | None = None,
+        year: int | None = None,
+        status: str | None = None,
+        jurisdiction: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        sort: str | None = None,
+    ) -> Iterator[LawSearchResult]:
+        """Auto-paginate across every match of a full-text search."""
+        if not q or not q.strip():
+            raise ValueError("q must be a non-empty search query")
+
+        def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
+            resp = self.search(
+                country,
+                q=q,
+                page=page,
+                per_page=per,
+                law_type=law_type,
+                year=year,
+                status=status,
+                jurisdiction=jurisdiction,
+                from_date=from_date,
+                to_date=to_date,
+                sort=sort,
+            )
+            return resp.results, resp.total
+
+        return iter(PageIterator(fetch, per_page=per_page, limit=limit))
+
     # ---- retrieve -------------------------------------------------------
 
     def retrieve(self, country: str, law_id: str) -> LawDetail:
@@ -176,6 +217,27 @@ class Laws(_SyncResource):
         """Return the law's full text at a specific historical version."""
         data = self._client.request("GET", f"{API}/{country}/laws/{law_id}/at/{sha}")
         return LawAtCommitResponse.model_validate(data)
+
+    def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
+        """Return the law's full text as published on or before ``date``.
+
+        The server resolves the date to a version, so callers do not have to
+        walk :meth:`commits` looking for a SHA. The response carries the
+        resolved ``sha`` and ``version_date`` so the answer stays verifiable.
+
+        The rule is *published on or before* ``date``, not *in force on* it:
+        the dates are official publication dates, so a reform still inside its
+        vacatio legis resolves as already applying. Cite accordingly.
+
+        Args:
+            country: Country code, e.g. ``"es"``.
+            law_id: Official identifier, e.g. ``"BOE-A-2003-23186"``.
+            date: Point in time as ``YYYY-MM-DD``.
+        """
+        data = self._client.request(
+            "GET", f"{API}/{country}/laws/{law_id}/at", params={"date": date}
+        )
+        return LawAtDateResponse.model_validate(data)
 
 
 class AsyncLaws(_AsyncResource):
@@ -212,6 +274,7 @@ class AsyncLaws(_AsyncResource):
         country: str,
         *,
         q: str,
+        page: int = 1,
         per_page: int = 50,
         law_type: str | _L[str] | None = None,
         year: int | None = None,
@@ -231,6 +294,7 @@ class AsyncLaws(_AsyncResource):
             from_date=from_date,
             to_date=to_date,
             sort=sort,
+            page=page,
             per_page=per_page,
             q=q,
         )
@@ -268,6 +332,43 @@ class AsyncLaws(_AsyncResource):
 
         return AsyncPageIterator(fetch, per_page=per_page, limit=limit).__aiter__()
 
+    def search_iter(
+        self,
+        country: str,
+        *,
+        q: str,
+        per_page: int = 100,
+        limit: int | None = None,
+        law_type: str | _L[str] | None = None,
+        year: int | None = None,
+        status: str | None = None,
+        jurisdiction: str | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        sort: str | None = None,
+    ) -> AsyncIterator[LawSearchResult]:
+        """Auto-paginate across every match of a full-text search."""
+        if not q or not q.strip():
+            raise ValueError("q must be a non-empty search query")
+
+        async def fetch(page: int, per: int) -> tuple[list[LawSearchResult], int]:
+            resp = await self.search(
+                country,
+                q=q,
+                page=page,
+                per_page=per,
+                law_type=law_type,
+                year=year,
+                status=status,
+                jurisdiction=jurisdiction,
+                from_date=from_date,
+                to_date=to_date,
+                sort=sort,
+            )
+            return resp.results, resp.total
+
+        return AsyncPageIterator(fetch, per_page=per_page, limit=limit).__aiter__()
+
     async def retrieve(self, country: str, law_id: str) -> LawDetail:
         data = await self._client.request("GET", f"{API}/{country}/laws/{law_id}")
         return LawDetail.model_validate(data)
@@ -283,6 +384,16 @@ class AsyncLaws(_AsyncResource):
     async def at_commit(self, country: str, law_id: str, sha: str) -> LawAtCommitResponse:
         data = await self._client.request("GET", f"{API}/{country}/laws/{law_id}/at/{sha}")
         return LawAtCommitResponse.model_validate(data)
+
+    async def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
+        """Return the law's full text as published on or before ``date``.
+
+        Async twin of :meth:`Laws.at_date`.
+        """
+        data = await self._client.request(
+            "GET", f"{API}/{country}/laws/{law_id}/at", params={"date": date}
+        )
+        return LawAtDateResponse.model_validate(data)
 
 
 __all__ = ["AsyncLaws", "Laws"]

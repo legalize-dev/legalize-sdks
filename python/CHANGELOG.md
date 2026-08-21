@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-21
+
+### Added
+
+- `laws.at_date(country, law_id, date)` — point-in-time retrieval by date. The API resolves the date to a
+  version server-side, so callers no longer walk `laws.commits()` looking for a SHA
+  to hand to `laws.at_commit()`. The response carries the resolved `sha` and
+  `version_date`, so the answer stays verifiable.
+
+  The rule is **published on or before** the date, not *in force on* it: the
+  dates are official publication dates, so a reform still inside its vacatio
+  legis resolves as already applying. Cite accordingly.
+
+## [0.2.1] — 2026-08-19
+
+### Added
+
+- `laws.search_iter(country, *, q, per_page=100, limit=None, ...)` on both
+  `Laws` and `AsyncLaws` — auto-paginates across every match of a full-text
+  search, the counterpart to `laws.iter()` for listings. The module docstring
+  and PARITY.md already promised it; the Node (`searchIter`) and Go
+  (`SearchIter`) SDKs already had it.
+
+### Fixed
+
+- `laws.search()` accepts `page`. Without it a search was capped at the first
+  `per_page` results (100 at most) with no way to reach the rest, and
+  `laws.iter()` only paginates listings, not searches. Requires the API-side
+  fix that made `page` effective for searches.
+
 ## [0.2.0] — 2026-06-17
 
 ### Added

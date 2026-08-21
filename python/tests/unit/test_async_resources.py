@@ -17,6 +17,7 @@ from legalize.models import (
     CountryInfo,
     JurisdictionInfo,
     LawAtCommitResponse,
+    LawAtDateResponse,
     LawDetail,
     LawMeta,
     PaginatedLaws,
@@ -158,6 +159,22 @@ async def test_laws_at_commit(aclient, handler):
     capture(handler, body={"law_id": "x", "sha": "a" * 7, "content_md": "c"})
     out = await aclient.laws.at_commit("es", "x", "a" * 7)
     assert isinstance(out, LawAtCommitResponse)
+
+
+async def test_laws_at_date(aclient, handler):
+    received = capture(
+        handler,
+        body={
+            "law_id": "x",
+            "date": "2012-09-20",
+            "sha": "a" * 7,
+            "version_date": "2011-09-27",
+            "content_md": "c",
+        },
+    )
+    out = await aclient.laws.at_date("es", "x", "2012-09-20")
+    assert received["request"].url.params["date"] == "2012-09-20"
+    assert isinstance(out, LawAtDateResponse)
 
 
 async def test_reforms_list(aclient, handler):

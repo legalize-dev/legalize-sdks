@@ -69,7 +69,7 @@ Python is the **reference implementation**. [`PARITY.md`](PARITY.md) is the cros
 
 `python/src/legalize/` is intentionally thin and transport-first:
 
-- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection (populated on success AND error).
+- `_client.py` — `Legalize` (sync) and `AsyncLegalize` (async) share `_BaseClient` for URL building, header assembly, API key validation (`leg_` prefix enforced client-side), and param cleaning. Each subclass wraps its own `httpx.Client`/`AsyncClient`. Both expose a generic `.request(method, path, ...)` plus `.last_response` for rate-limit header inspection (populated on success AND error). They also expose `request_raw(method, path, *, format="xml", ...)` → `RawResponse` (raw bytes/text + content-type) for content negotiation — the escape hatch to fetch any endpoint as XML without JSON-decoding (Node `requestRaw`, Go `RequestRaw` + `WithFormat`; see PARITY.md §12).
 - `_retry.py` — `RetryPolicy` (exponential backoff, honors `Retry-After` as both delta-seconds and HTTP-date). Resolved through `_resolve_retry_policy`: explicit `retry=` wins over `max_retries=`.
 - `_errors.py` — `APIError` hierarchy mapped by status code via `APIError.from_response`.
 - `_pagination.py` — offset-based pagination helpers used by list endpoints.
@@ -153,6 +153,22 @@ Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push
 - Python: `python/pyproject.toml` + `python/src/legalize/_version.py` + `python/CHANGELOG.md`, tag `python-vX.Y.Z`.
 - Node: `node/package.json` + `node/CHANGELOG.md`, tag `node-vX.Y.Z`.
 - Go: `go/version.go` + `go/CHANGELOG.md`, tag `go/vX.Y.Z` (the `go/` prefix is mandatory — Go's submodule resolver requires it).
+
+### Release traps
+
+- **Tag only after the PR is on `main`.** The tag is what publishes; tagging while the PR is
+  still open puts the tag on a commit whose version files still say the old number, and the
+  publish job aborts on the version check (it fails closed, so nothing reaches the registry —
+  delete the tag, land the PR, tag again).
+- **`main` is protected**: a squash merge needs an approving review, or `gh pr merge --admin`.
+- **ruff is unpinned** (`ruff>=0.6` in the dev extra) and CI runs `ruff format --check .` over the
+  whole tree, **markdown code blocks included**. A new ruff release can therefore fail lint on a
+  PR that never touched the offending file — 0.16 reformatted a README block from the XML PR.
+  Reformat and move on, or pin ruff if it becomes a recurring tax.
+- **The engine repo also installs a package called `legalize`.** Running `pytest` on this repo
+  from an environment that has the engine installed imports the wrong one and the conftest fails
+  with `cannot import name 'AsyncLegalize'`. Test from a venv with this SDK installed
+  (`pip install -e ".[dev]"`).
 
 SDK versions track the SDK, not the API. API version is negotiated per-request via `Legalize-API-Version` (default `v1`, overridable via `LEGALIZE_API_VERSION`).
 

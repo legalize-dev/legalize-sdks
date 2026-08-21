@@ -6,4 +6,4 @@ package legalize
 //
 // Keep this in sync with the git tag (go/vX.Y.Z) when cutting a
 // release. The publish workflow verifies the tag matches this value.
-const Version = "0.2.0"
+const Version = "0.3.0"

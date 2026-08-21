@@ -8,6 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-21
+
+### Added
+
+- `Laws().AtDate(ctx, country, lawID, date)` — point-in-time retrieval by date. The API resolves the date to a
+  version server-side, so callers no longer walk `Laws().Commits()` looking for a SHA
+  to hand to `Laws().AtCommit()`. The response carries the resolved `sha` and
+  `version_date`, so the answer stays verifiable.
+
+  The rule is **published on or before** the date, not *in force on* it: the
+  dates are official publication dates, so a reform still inside its vacatio
+  legis resolves as already applying. Cite accordingly.
+
+  `SHA` and `VersionDate` are `*string`: a date before the law existed is a
+  valid answer with no version behind it, which is not the same as a version
+  whose text came back empty.
+
 ## [0.2.0] — 2026-06-17
 
 ### Added
