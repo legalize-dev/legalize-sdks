@@ -137,7 +137,8 @@ class TestLawsRetrieve:
     # We look up its real ID dynamically so the test survives ID rewrites.
 
     @pytest.fixture(scope="class")
-    def stable_law_id(self, api_key, base_url):
+    @classmethod
+    def stable_law_id(cls, api_key, base_url):
         with Legalize(api_key=api_key, base_url=base_url) as client:
             page = client.laws.list("es", law_type="constitucion", per_page=1)
             if not page.results:
@@ -170,7 +171,8 @@ class TestLawsRetrieve:
 
 class TestLawHistory:
     @pytest.fixture(scope="class")
-    def reformed_law(self, api_key, base_url):
+    @classmethod
+    def reformed_law(cls, api_key, base_url):
         """A law with ≥1 reform so history tests have something to verify.
 
         Uses ``stats.most_reformed_laws`` which is sorted by reform
