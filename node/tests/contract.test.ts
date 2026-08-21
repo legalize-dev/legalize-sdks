@@ -52,6 +52,7 @@ const PROBES: Record<string, (c: Legalize) => Promise<unknown>> = {
   "GET /api/v1/{country}/laws/{law_id}/meta": (c) => c.laws.meta("es", "x"),
   "GET /api/v1/{country}/laws/{law_id}/commits": (c) => c.laws.commits("es", "x"),
   "GET /api/v1/{country}/laws/{law_id}/at/{sha}": (c) => c.laws.atCommit("es", "x", "abc"),
+  "GET /api/v1/{country}/laws/{law_id}/at": (c) => c.laws.atDate("es", "x", "2012-09-20"),
   "GET /api/v1/{country}/laws/{law_id}/reforms": (c) => c.reforms.list("es", "x"),
   "GET /api/v1/{country}/stats": (c) => c.stats.retrieve("es"),
   "POST /api/v1/webhooks": (c) =>

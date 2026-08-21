@@ -93,6 +93,16 @@ past, _ := client.Laws().AtCommit(ctx, "es", "ley_organica_3_2018",
 fmt.Println(past.ContentMD) // Markdown at that revision
 ```
 
+Or skip the SHA lookup entirely and ask by date:
+
+```go
+at, _ := client.Laws().AtDate(ctx, "es", "ley_organica_3_2018", "2019-05-13")
+fmt.Println(*at.SHA, *at.VersionDate) // which version answered, so you can cite it
+```
+
+`SHA` and `VersionDate` are nil when nothing had been published by that date.
+The rule is *published on or before* the date, not *in force on* it.
+
 ### XML (and other raw formats)
 
 The typed methods always return JSON-parsed models. When your app speaks

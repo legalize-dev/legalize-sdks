@@ -21,6 +21,7 @@ export type JurisdictionInfo = components["schemas"]["JurisdictionInfo"];
 export type Commit = components["schemas"]["Commit"];
 export type CommitsResponse = components["schemas"]["CommitsResponse"];
 export type LawAtCommitResponse = components["schemas"]["LawAtCommitResponse"];
+export type LawAtDateResponse = components["schemas"]["LawAtDateResponse"];
 export type LawDetail = components["schemas"]["LawDetail"];
 export type LawMeta = components["schemas"]["LawMeta"];
 export type LawSearchResult = components["schemas"]["LawSearchResult"];

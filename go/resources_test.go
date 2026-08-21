@@ -237,6 +237,46 @@ func TestLaws_AtCommit(t *testing.T) {
 	}
 }
 
+func TestLaws_AtDate(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assertMethodPath(t, r, "GET", "/api/v1/es/laws/L/at")
+		if got := r.URL.Query().Get("date"); got != "2012-09-20" {
+			t.Errorf("date param: %q", got)
+		}
+		_, _ = io.WriteString(w, `{"law_id":"L","date":"2012-09-20","sha":"deadbeef","version_date":"2011-09-27","content_md":"# old"}`)
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	r, err := c.Laws().AtDate(context.Background(), "es", "L", "2012-09-20")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.SHA == nil || *r.SHA != "deadbeef" {
+		t.Errorf("sha: %+v", r.SHA)
+	}
+	if r.VersionDate == nil || *r.VersionDate != "2011-09-27" {
+		t.Errorf("version_date: %+v", r.VersionDate)
+	}
+}
+
+// TestLaws_AtDateNoVersion pins that "nothing published by then" arrives as a
+// nil SHA rather than an empty string, so callers can tell it from a version
+// whose text failed to load.
+func TestLaws_AtDateNoVersion(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, `{"law_id":"L","date":"1800-01-01","sha":null,"version_date":null,"content_md":""}`)
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	r, err := c.Laws().AtDate(context.Background(), "es", "L", "1800-01-01")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.SHA != nil || r.VersionDate != nil {
+		t.Errorf("expected nils, got sha=%+v version_date=%+v", r.SHA, r.VersionDate)
+	}
+}
+
 // ---- reforms ----------------------------------------------------------
 
 func TestReforms_List(t *testing.T) {

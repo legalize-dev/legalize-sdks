@@ -42,6 +42,7 @@ for law in client.laws.iter(country="es", law_type="ley_organica"):
 
 results = client.laws.search(country="es", q="protección de datos")
 content = client.laws.at_commit(country="es", law_id="ley_organica_3_2018", sha="abc1234")
+at_date = client.laws.at_date(country="es", law_id="ley_organica_3_2018", date="2019-05-13")
 ```
 
 ### Node / TypeScript

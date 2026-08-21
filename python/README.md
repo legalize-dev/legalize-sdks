@@ -71,6 +71,15 @@ past = client.laws.at_commit(
 print(past.content)  # Markdown at that revision
 ```
 
+Or skip the SHA lookup entirely and ask by date:
+
+```python
+at = client.laws.at_date(country="es", law_id="ley_organica_3_2018", date="2019-05-13")
+print(at.sha, at.version_date)  # which version answered, so you can cite it
+```
+
+The rule is *published on or before* the date, not *in force on* it.
+
 ### XML (and other raw formats)
 
 The typed methods always return JSON-parsed models. When your app speaks

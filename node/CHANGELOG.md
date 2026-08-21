@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-21
+
+### Added
+
+- `laws.atDate(country, lawId, date)` — point-in-time retrieval by date. The API resolves the date to a
+  version server-side, so callers no longer walk `laws.commits()` looking for a SHA
+  to hand to `laws.atCommit()`. The response carries the resolved `sha` and
+  `version_date`, so the answer stays verifiable.
+
+  The rule is **published on or before** the date, not *in force on* it: the
+  dates are official publication dates, so a reform still inside its vacatio
+  legis resolves as already applying. Cite accordingly.
+
 ## [0.2.0] — 2026-06-17
 
 ### Added
