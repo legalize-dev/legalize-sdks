@@ -160,7 +160,7 @@ Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push
   still open puts the tag on a commit whose version files still say the old number, and the
   publish job aborts on the version check (it fails closed, so nothing reaches the registry —
   delete the tag, land the PR, tag again).
-- **`main` is protected**: a squash merge needs an approving review, or `gh pr merge --admin`.
+- **`main` is protected**, but requires **0** approving reviews — `gh pr merge --squash` lands once the required checks (`Analyze (python)`, `Analyze (actions)`) are green, no `--admin` and no reviewer needed. The old note here claimed an approval was required; it is not, and believing it was is what kept Dependabot's auto-merge "broken by design" instead of investigated.
 - **ruff is unpinned** (`ruff>=0.6` in the dev extra) and CI runs `ruff format --check .` over the
   whole tree, **markdown code blocks included**. A new ruff release can therefore fail lint on a
   PR that never touched the offending file — 0.16 reformatted a README block from the XML PR.
@@ -172,7 +172,7 @@ Release flow per SDK: bump the version file(s) + CHANGELOG in one PR, land, push
 
 SDK versions track the SDK, not the API. API version is negotiated per-request via `Legalize-API-Version` (default `v1`, overridable via `LEGALIZE_API_VERSION`).
 
-Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Majors are held back for manual migration: pydantic in pip, and every npm entry (the Node SDK has zero runtime deps, so npm is all dev tooling). Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
+Supply-chain: `.github/dependabot.yml` opens weekly grouped PRs for GitHub Actions, pip (`/python`), npm (`/node`), and gomod (`/go`). Majors are held back for manual migration: pydantic in pip, and every npm entry (the Node SDK has zero runtime deps, so npm is all dev tooling). Minor/patch bumps auto-merge via `dependabot-automerge.yml` — it had never worked until 2026-08-21 because its `gh pr review --approve` step is forbidden to `GITHUB_TOKEN` and killed the job before the merge step. Secret scanning + push protection + Dependabot security updates are enabled at the repo level.
 
 ## Conventions
 
