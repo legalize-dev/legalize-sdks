@@ -50,10 +50,32 @@ type LawAtDateResponse struct {
 	Date        string  `json:"date"`
 	SHA         *string `json:"sha"`
 	VersionDate *string `json:"version_date"`
+	Citation    string  `json:"citation"`
+	CitationURL string  `json:"citation_url"`
 	ContentMD   string  `json:"content_md"`
 }
 
+// TextState values (Legalize Format Spec v0.3): what the body of a law
+// actually is. An absent field means TextStatePointInTime, which is what 13 of
+// the 14 countries publish.
+const (
+	// TextStatePointInTime is the law as in force on its date.
+	TextStatePointInTime = "point_in_time"
+	// TextStateCurrent is the latest text the source publishes, whatever date
+	// it corresponds to.
+	TextStateCurrent = "current"
+	// TextStateAsEnacted is the act as published, with later amendments not
+	// folded into the text. 166,422 of Portugal's 171,739 laws are this.
+	TextStateAsEnacted = "as_enacted"
+)
+
 // LawDetail is a full law with Markdown content.
+//
+// TextSuperseded answers "can I quote this as the law in force?": true when the
+// body is out of date, whatever Status says. Do not derive it from ReformCount:
+// where a source publishes the same act twice the amendments are recorded
+// against the consolidated copy, so the as-published one reports zero while
+// being stale — 227 of Portugal's laws. The server resolves that.
 type LawDetail struct {
 	ID              string         `json:"id"`
 	Title           string         `json:"title"`
@@ -64,6 +86,10 @@ type LawDetail struct {
 	PublicationDate *string        `json:"publication_date,omitempty"`
 	Jurisdiction    *string        `json:"jurisdiction,omitempty"`
 	ArticleCount    *int           `json:"article_count,omitempty"`
+	ArticlesIndexed bool           `json:"articles_indexed"`
+	TextState       string         `json:"text_state"`
+	ReformCount     *int           `json:"reform_count,omitempty"`
+	TextSuperseded  *bool          `json:"text_superseded"`
 	ContentMD       *string        `json:"content_md,omitempty"`
 	Department      *string        `json:"department,omitempty"`
 	Source          *string        `json:"source,omitempty"`
@@ -83,6 +109,10 @@ type LawMeta struct {
 	PublicationDate *string        `json:"publication_date,omitempty"`
 	Jurisdiction    *string        `json:"jurisdiction,omitempty"`
 	ArticleCount    *int           `json:"article_count,omitempty"`
+	ArticlesIndexed bool           `json:"articles_indexed"`
+	TextState       string         `json:"text_state"`
+	ReformCount     *int           `json:"reform_count,omitempty"`
+	TextSuperseded  *bool          `json:"text_superseded"`
 	Department      *string        `json:"department,omitempty"`
 	Source          *string        `json:"source,omitempty"`
 	LastUpdated     *string        `json:"last_updated,omitempty"`
@@ -100,6 +130,10 @@ type LawSearchResult struct {
 	PublicationDate *string `json:"publication_date,omitempty"`
 	Jurisdiction    *string `json:"jurisdiction,omitempty"`
 	ArticleCount    *int    `json:"article_count,omitempty"`
+	ArticlesIndexed bool    `json:"articles_indexed"`
+	TextState       string  `json:"text_state"`
+	ReformCount     *int    `json:"reform_count,omitempty"`
+	TextSuperseded  *bool   `json:"text_superseded"`
 	TitleSnippet    *string `json:"title_snippet,omitempty"`
 }
 
@@ -124,6 +158,7 @@ type Reform struct {
 	Date             string  `json:"date"`
 	SourceID         *string `json:"source_id,omitempty"`
 	ArticlesAffected *string `json:"articles_affected,omitempty"`
+	SourceTitle      *string `json:"source_title,omitempty"`
 }
 
 // ReformsResponse is the return payload of reforms.list.

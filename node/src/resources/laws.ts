@@ -40,6 +40,7 @@ function buildFilterParams(
     from_date: opts.fromDate,
     to_date: opts.toDate,
     sort: opts.sort,
+    text_state: opts.textState,
     ...extras,
   };
 }
@@ -90,21 +91,19 @@ export class Laws {
     country: string,
     options: LawIterOptions & { signal?: AbortSignal } = {},
   ): AsyncIterableIterator<LawSearchResult> {
+    const { perPage: _perPage, limit, ...filters } = options;
     const perPage = options.perPage ?? 100;
-    const limit = options.limit;
     const fetchPage = async (page: number, per: number): Promise<[LawSearchResult[], number]> => {
+      // Forward the filters, never re-list them. Rebuilding this object field
+      // by field is how `textState` came to be dropped here while `list` and
+      // `search` honored it: every field is optional, so the compiler saw a
+      // valid LawListOptions and said nothing, and the mocked unit tests only
+      // covered the two methods that were right.
       const listOpts: LawListOptions & { signal?: AbortSignal } = {
+        ...filters,
         page,
         perPage: per,
-        lawType: options.lawType,
-        year: options.year,
-        status: options.status,
-        jurisdiction: options.jurisdiction,
-        fromDate: options.fromDate,
-        toDate: options.toDate,
-        sort: options.sort,
       };
-      if (options.signal) listOpts.signal = options.signal;
       const resp = await this.list(country, listOpts);
       return [resp.results, resp.total];
     };
@@ -120,21 +119,15 @@ export class Laws {
     if (!q || !q.trim()) {
       throw new TypeError("q must be a non-empty search query");
     }
+    const { perPage: _perPage, limit, ...filters } = options;
     const perPage = options.perPage ?? 100;
-    const limit = options.limit;
     const fetchPage = async (page: number, per: number): Promise<[LawSearchResult[], number]> => {
+      // Same forwarding rule as iter — see the comment there.
       const searchOpts: LawSearchOptions & { signal?: AbortSignal } = {
+        ...filters,
         page,
         perPage: per,
-        lawType: options.lawType,
-        year: options.year,
-        status: options.status,
-        jurisdiction: options.jurisdiction,
-        fromDate: options.fromDate,
-        toDate: options.toDate,
-        sort: options.sort,
       };
-      if (options.signal) searchOpts.signal = options.signal;
       const resp = await this.search(country, q, searchOpts);
       return [resp.results, resp.total];
     };

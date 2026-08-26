@@ -116,7 +116,7 @@ semantic behaviour.
 
 ### laws
 
-- `laws.list(country, *, page=1, per_page=50, law_type, year, status, jurisdiction, from_date, to_date, sort)` → `PaginatedLaws`
+- `laws.list(country, *, page=1, per_page=50, law_type, year, status, jurisdiction, from_date, to_date, sort, text_state)` → `PaginatedLaws`
 - `laws.search(country, q, *, page=1, per_page=50, ...)` → `PaginatedLaws`
   (convenience wrapper that sets `q=...`)
 - `laws.iter(country, *, per_page=100, limit, ...)` → lazy iterator of `LawSearchResult`
@@ -136,10 +136,29 @@ semantic behaviour.
   `version_date` are nullable: a date before the law existed is a valid answer
   with no version behind it.
 
+  `text_state` is a filter on **what the body of a law is**, and every listing
+  and iterating method must accept it: `list`, `search`, `iter`, `search_iter`.
+  It is optional and additive — omitted, the endpoint returns every state, which
+  is what it returned before the filter existed. Values are
+  `point_in_time` | `current` | `as_enacted` (§3.1). SDKs MUST NOT validate the
+  value client-side: the server owns the vocabulary and rejects an unknown one
+  with `invalid_text_state`, so a value added later works without an SDK bump.
+  Where the language has an idiomatic open union (TypeScript `LawSort`), model
+  it the same way; otherwise a plain string.
+
 ### reforms
 
 - `reforms.list(country, law_id, *, limit=50, offset=0)` → `ReformsResponse`
 - `reforms.iter(country, law_id, *, per_page=100, limit)` → lazy iterator of `Reform`
+
+  `Reform.source_title` names the act that made the change, resolved from
+  `source_id` against the corpus, and is nullable — the amending act is not
+  always one we serve. How often it is present depends on which text you are
+  reading the history of: for an `as_enacted` law 119,915 of Portugal's 120,687
+  amendments are named (99.4%), for a `point_in_time` law none of its 9,942 are,
+  because a consolidated text's amendments are recorded under the source's own
+  revision identifiers rather than law identifiers. SDKs MUST surface the field
+  as nullable and MUST NOT document it as usually present without that split.
 
 ### stats
 
@@ -155,6 +174,39 @@ semantic behaviour.
 - `webhooks.deliveries(endpoint_id, *, page=1, per_page=50, status=None)` → page of deliveries
 - `webhooks.retry(endpoint_id, delivery_id)` → delivery
 - `webhooks.test(endpoint_id)` → test delivery
+
+### 3.1 What the text is, and whether it is still the law
+
+Two response fields answer a question no other field does, and every SDK MUST
+carry both on `LawSummary`, `LawSearchResult`, `LawMeta` and `LawDetail`.
+
+**`text_state`** — what the body of the file is (Legalize Format Spec v0.3):
+
+| value | the body is | quotable as the law in force |
+|---|---|---|
+| `point_in_time` | the law as in force on its date | yes |
+| `current` | the latest text the source publishes | yes |
+| `as_enacted` | the act as published, amendments not folded in | only if nothing amended it |
+
+Absent means `point_in_time`, which is what 13 of the 14 countries publish, so
+SDKs MUST default the field to that rather than to null.
+
+**`text_superseded`** — whether the body is out of date. This is the field a
+client decides on: a law can be `status: in_force` and its text still be
+superseded. Portugal serves 166,422 of its 171,739 acts as enacted, so this is
+not an edge case.
+
+`null` means unknown, and MUST NOT be rendered or treated as `false` — `false`
+reads as "safe to quote", which is the expensive direction to be wrong in.
+
+**SDKs MUST NOT compute `text_superseded` themselves**, and MUST NOT document
+it as `as_enacted && reform_count > 0`. That formula is wrong on exactly the
+laws that matter most: where a source publishes the same act twice — Portugal
+does for 338 — the amendment history is recorded against the consolidated copy
+and the as-published one reports `reform_count: 0` while being provably stale.
+227 of Portugal's laws are that case, including Lei n.º 28/82, amended nine
+times. The server resolves it; the field is the answer, and `reform_count` is
+the count for *that* record only.
 
 ### Response types
 
@@ -344,6 +396,22 @@ community-standard framework:
   at `max_delay`, never retries beyond `max_retries`, honors
   `Retry-After`) and pagination (iter exhausts exactly `total` items
   across page boundaries).
+- **text state** — five checks, because §3.1 is the part a client gets
+  wrong on its own: `text_state` reaches the wire from both `list` and
+  `search`, **survives every page of `iter` and `search_iter`**, is
+  absent from the query string when not asked for, a result decodes
+  `text_state` / `reform_count` / `text_superseded`, and a reform
+  decodes `source_title`.
+
+  The iterator check is not redundant. The Node SDK shipped `iter` and
+  `searchIter` rebuilding their filter object field by field, so
+  `textState` was dropped there while `list` and `search` honored it —
+  and nothing caught it: every field of the rebuilt object is optional,
+  so the compiler saw a valid `LawListOptions`, and the mocked unit
+  tests only covered the two methods that were right. It surfaced the
+  first time an SDK was pointed at a real server. **Iterators MUST
+  forward the filters they were given rather than re-enumerate them**
+  (Go copies the options struct; Node spreads it).
 - **contract** — validates the SDK covers every `(method, path)` in
   `openapi-sdk.json`. Failing this test means someone added a spec
   endpoint without adding the SDK method.

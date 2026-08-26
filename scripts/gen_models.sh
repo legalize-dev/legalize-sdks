@@ -32,4 +32,12 @@ OUT="$ROOT/python/src/legalize/models/_generated.py"
   --collapse-root-models \
   --strict-nullable
 
+# The generator's own formatter is not the repo's: it emits single quotes, so
+# every regeneration came with ~90 lines of quote churn on top of the real diff.
+RUFF="ruff"
+if [ -x "$ROOT/python/.venv/bin/ruff" ]; then
+  RUFF="$ROOT/python/.venv/bin/ruff"
+fi
+"$RUFF" format "$OUT"
+
 echo "Wrote $OUT"

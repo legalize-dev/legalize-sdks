@@ -99,6 +99,87 @@ describe("laws.list", () => {
   });
 });
 
+describe("text state", () => {
+  const PAGE = { country: "pt", total: 0, page: 1, per_page: 50, results: [] };
+
+  it("sends textState as text_state when listing", async () => {
+    const { client, calls } = buildClient(PAGE);
+    await client.laws.list("pt", { textState: "as_enacted" });
+    expect(qParams(calls[0]!).text_state).toBe("as_enacted");
+  });
+
+  it("sends textState as text_state when searching", async () => {
+    const { client, calls } = buildClient(PAGE);
+    await client.laws.search("pt", "lei", { textState: "point_in_time" });
+    expect(qParams(calls[0]!).text_state).toBe("point_in_time");
+  });
+
+  it("omits the filter when it is not asked for", async () => {
+    const { client, calls } = buildClient(PAGE);
+    await client.laws.list("pt");
+    expect(qParams(calls[0]!).text_state).toBeUndefined();
+  });
+
+  it("surfaces whether a result's text is still the law", async () => {
+    // In force and not quotable: the body is the act as published and twelve
+    // amendments have landed on it since. Only text_superseded says so.
+    const { client } = buildClient({
+      ...PAGE,
+      total: 1,
+      results: [
+        {
+          ...LAW_META,
+          status: "in_force",
+          text_state: "as_enacted",
+          reform_count: 12,
+          text_superseded: true,
+        },
+      ],
+    });
+    const law = (await client.laws.list("pt")).results[0]!;
+    expect(law.text_state).toBe("as_enacted");
+    expect(law.reform_count).toBe(12);
+    expect(law.text_superseded).toBe(true);
+  });
+
+  it("keeps the filter across every page of iter", async () => {
+    // iter and searchIter used to rebuild the filter object field by field, so
+    // a filter added to list was silently dropped here — and TypeScript could
+    // not see it, since every field of the rebuilt object is optional.
+    const { client, calls } = buildClient({ ...PAGE, total: 1, results: [LAW_META] });
+    for await (const _ of client.laws.iter("pt", { textState: "as_enacted", perPage: 1 })) {
+      // drain
+    }
+    expect(qParams(calls[0]!).text_state).toBe("as_enacted");
+  });
+
+  it("keeps the filter across every page of searchIter", async () => {
+    const { client, calls } = buildClient({ ...PAGE, total: 1, results: [LAW_META] });
+    for await (const _ of client.laws.searchIter("pt", "lei", { textState: "as_enacted", perPage: 1 })) {
+      // drain
+    }
+    expect(qParams(calls[0]!).text_state).toBe("as_enacted");
+  });
+
+  it("names the act that made each reform", async () => {
+    const { client } = buildClient({
+      law_id: "x",
+      total: 1,
+      offset: 0,
+      limit: 100,
+      reforms: [
+        {
+          date: "2023-07-04",
+          source_id: "DRE-2023-27-215097635",
+          source_title: "Lei n.º 27/2023",
+        },
+      ],
+    });
+    const out = await client.reforms.list("pt", "x");
+    expect(out.reforms[0]!.source_title).toBe("Lei n.º 27/2023");
+  });
+});
+
 describe("laws.search", () => {
   it("requires a non-empty query", async () => {
     const c = new Legalize({ apiKey: "leg_t", fetch: async () => jsonResponse(200, {}) });

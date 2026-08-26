@@ -24,6 +24,15 @@ export type LawAtCommitResponse = components["schemas"]["LawAtCommitResponse"];
 export type LawAtDateResponse = components["schemas"]["LawAtDateResponse"];
 export type LawDetail = components["schemas"]["LawDetail"];
 export type LawMeta = components["schemas"]["LawMeta"];
+/**
+ * A law in a listing or search result.
+ *
+ * `text_superseded` answers "can I quote this as the law in force?" — `true`
+ * when the body is out of date, whatever `status` says. Do not derive it from
+ * `reform_count`: where a source publishes the same act twice the amendments
+ * are recorded against the consolidated copy, so the as-published one reports
+ * zero while being stale (227 of Portugal's laws). The server resolves it.
+ */
 export type LawSearchResult = components["schemas"]["LawSearchResult"];
 export type PaginatedLaws = components["schemas"]["PaginatedLaws"];
 export type Reform = components["schemas"]["Reform"];
@@ -53,6 +62,22 @@ export type LawSort =
   // Forward-compat:
   | (string & {});
 
+/**
+ * What the body of a law actually is (Legalize Format Spec v0.3).
+ *
+ * Open like `LawSort`: the server owns the vocabulary, so a value it adds
+ * later does not need an SDK bump to be usable.
+ */
+export type TextState =
+  /** The law as in force on its date — what 13 of the 14 countries publish. */
+  | "point_in_time"
+  /** The latest text the source publishes, whatever date it corresponds to. */
+  | "current"
+  /** The act as published; later amendments are not folded into the text. */
+  | "as_enacted"
+  // Forward-compat:
+  | (string & {});
+
 /** Options shared by `laws.list` and `laws.iter` filter surfaces. */
 export interface LawFilterOptions {
   lawType?: string | string[];
@@ -62,6 +87,8 @@ export interface LawFilterOptions {
   fromDate?: string;
   toDate?: string;
   sort?: LawSort;
+  /** Keep only laws whose body is in this state. Omit for every state. */
+  textState?: TextState;
 }
 
 export interface LawListOptions extends LawFilterOptions {

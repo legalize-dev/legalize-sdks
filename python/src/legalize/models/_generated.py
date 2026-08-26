@@ -42,8 +42,14 @@ class LawAtDateResponse(BaseModel):
     ``sha`` and ``version_date`` are returned so the caller can verify the
     answer and cite the exact version, rather than trusting the date they
     asked for.
+
+    ``citation`` is that same answer as one line to paste into a filing, in the
+    language of the jurisdiction, and ``citation_url`` is the public page the
+    other side can open to check it.
     """
 
+    citation: str = Field(..., title="Citation")
+    citation_url: str = Field(..., title="Citation Url")
     content_md: str = Field(..., title="Content Md")
     date: str = Field(..., title="Date")
     law_id: str = Field(..., title="Law Id")
@@ -57,6 +63,11 @@ class LawDetail(BaseModel):
     """
 
     article_count: int | None = Field(None, title="Article Count")
+    articles_indexed: bool = Field(
+        ...,
+        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
+        title="Articles Indexed",
+    )
     content_md: str | None = Field(None, title="Content Md")
     country: str = Field(..., title="Country")
     department: str | None = Field(None, title="Department")
@@ -67,9 +78,12 @@ class LawDetail(BaseModel):
     last_updated: str | None = Field(None, title="Last Updated")
     law_type: str = Field(..., title="Law Type")
     publication_date: str | None = Field(None, title="Publication Date")
+    reform_count: int | None = Field(None, title="Reform Count")
     short_title: str | None = Field(None, title="Short Title")
     source: str | None = Field(None, title="Source")
     status: str | None = Field(None, title="Status")
+    text_state: str = Field("point_in_time", title="Text State")
+    text_superseded: bool | None = Field(None, title="Text Superseded")
     title: str = Field(..., title="Title")
 
 
@@ -79,6 +93,11 @@ class LawMeta(BaseModel):
     """
 
     article_count: int | None = Field(None, title="Article Count")
+    articles_indexed: bool = Field(
+        ...,
+        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
+        title="Articles Indexed",
+    )
     country: str = Field(..., title="Country")
     department: str | None = Field(None, title="Department")
     extra: dict[str, Any] | None = Field(None, title="Extra")
@@ -87,9 +106,12 @@ class LawMeta(BaseModel):
     last_updated: str | None = Field(None, title="Last Updated")
     law_type: str = Field(..., title="Law Type")
     publication_date: str | None = Field(None, title="Publication Date")
+    reform_count: int | None = Field(None, title="Reform Count")
     short_title: str | None = Field(None, title="Short Title")
     source: str | None = Field(None, title="Source")
     status: str | None = Field(None, title="Status")
+    text_state: str = Field("point_in_time", title="Text State")
+    text_superseded: bool | None = Field(None, title="Text Superseded")
     title: str = Field(..., title="Title")
 
 
@@ -99,13 +121,21 @@ class LawSearchResult(BaseModel):
     """
 
     article_count: int | None = Field(None, title="Article Count")
+    articles_indexed: bool = Field(
+        ...,
+        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
+        title="Articles Indexed",
+    )
     country: str = Field(..., title="Country")
     id: str = Field(..., title="Id")
     jurisdiction: str | None = Field(None, title="Jurisdiction")
     law_type: str = Field(..., title="Law Type")
     publication_date: str | None = Field(None, title="Publication Date")
+    reform_count: int | None = Field(None, title="Reform Count")
     short_title: str | None = Field(None, title="Short Title")
     status: str | None = Field(None, title="Status")
+    text_state: str = Field("point_in_time", title="Text State")
+    text_superseded: bool | None = Field(None, title="Text Superseded")
     title: str = Field(..., title="Title")
     title_snippet: str | None = Field(None, title="Title Snippet")
 
@@ -136,6 +166,7 @@ class Reform(BaseModel):
     articles_affected: str | None = Field(None, title="Articles Affected")
     date: str = Field(..., title="Date")
     source_id: str | None = Field(None, title="Source Id")
+    source_title: str | None = Field(None, title="Source Title")
 
 
 class ReformsResponse(BaseModel):

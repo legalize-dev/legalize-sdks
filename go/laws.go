@@ -25,6 +25,10 @@ type LawsListOptions struct {
 	FromDate     *string
 	ToDate       *string
 	Sort         *string
+	// TextState keeps only laws whose body is in that state — one of
+	// TextStatePointInTime, TextStateCurrent, TextStateAsEnacted. Nil returns
+	// every state, which is what this endpoint has always done.
+	TextState *string
 }
 
 func (o *LawsListOptions) params() map[string]any {
@@ -41,6 +45,7 @@ func (o *LawsListOptions) params() map[string]any {
 		"from_date":    o.FromDate,
 		"to_date":      o.ToDate,
 		"sort":         o.Sort,
+		"text_state":   o.TextState,
 	}
 }
 

@@ -210,8 +210,8 @@ export interface paths {
          *     Without `q`: returns a paginated list of all laws, sorted by date (newest first).
          *     With `q`: full-text search with relevance ranking.
          *
-         *     All filters (law_type, year, status, jurisdiction, from_date, to_date) apply
-         *     in both listing and search modes. Use `sort` to change order.
+         *     All filters (law_type, year, status, jurisdiction, from_date, to_date, text_state)
+         *     apply in both listing and search modes. Use `sort` to change order.
          */
         get: operations["api_list_laws_api_v1__country__laws_get"];
         put?: never;
@@ -263,7 +263,8 @@ export interface paths {
          *
          *     The rule is **published on or before** the date, not "in force on" it: the
          *     dates are official publication dates, so a reform still within its vacatio
-         *     legis resolves as already applying. Cite accordingly.
+         *     legis resolves as already applying. Cite accordingly — `citation` says so in
+         *     words, and `citation_url` is the page that backs it up.
          */
         get: operations["api_law_at_date_api_v1__country__laws__law_id__at_get"];
         put?: never;
@@ -432,8 +433,16 @@ export interface components {
          *     ``sha`` and ``version_date`` are returned so the caller can verify the
          *     answer and cite the exact version, rather than trusting the date they
          *     asked for.
+         *
+         *     ``citation`` is that same answer as one line to paste into a filing, in the
+         *     language of the jurisdiction, and ``citation_url`` is the public page the
+         *     other side can open to check it.
          */
         LawAtDateResponse: {
+            /** Citation */
+            citation: string;
+            /** Citation Url */
+            citation_url: string;
             /** Content Md */
             content_md: string;
             /** Date */
@@ -452,6 +461,17 @@ export interface components {
         LawDetail: {
             /** Article Count */
             article_count?: number | null;
+            /**
+             * Articles Indexed
+             * @description Whether *we* broke this law into articles — not whether it has any.
+             *
+             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
+             *     most of the corpora where it appears that is false: the articles are in
+             *     the text and we did not index them. Callers asking for an article, or
+             *     grepping one, need to tell "no such article" from "no index here", so the
+             *     distinction is stated rather than left to be inferred from a zero.
+             */
+            readonly articles_indexed: boolean;
             /** Content Md */
             content_md?: string | null;
             /** Country */
@@ -476,12 +496,21 @@ export interface components {
             law_type: string;
             /** Publication Date */
             publication_date?: string | null;
+            /** Reform Count */
+            reform_count?: number | null;
             /** Short Title */
             short_title?: string | null;
             /** Source */
             source?: string | null;
             /** Status */
             status?: string | null;
+            /**
+             * Text State
+             * @default point_in_time
+             */
+            text_state: string;
+            /** Text Superseded */
+            text_superseded?: boolean | null;
             /** Title */
             title: string;
         };
@@ -492,6 +521,17 @@ export interface components {
         LawMeta: {
             /** Article Count */
             article_count?: number | null;
+            /**
+             * Articles Indexed
+             * @description Whether *we* broke this law into articles — not whether it has any.
+             *
+             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
+             *     most of the corpora where it appears that is false: the articles are in
+             *     the text and we did not index them. Callers asking for an article, or
+             *     grepping one, need to tell "no such article" from "no index here", so the
+             *     distinction is stated rather than left to be inferred from a zero.
+             */
+            readonly articles_indexed: boolean;
             /** Country */
             country: string;
             /** Department */
@@ -510,12 +550,21 @@ export interface components {
             law_type: string;
             /** Publication Date */
             publication_date?: string | null;
+            /** Reform Count */
+            reform_count?: number | null;
             /** Short Title */
             short_title?: string | null;
             /** Source */
             source?: string | null;
             /** Status */
             status?: string | null;
+            /**
+             * Text State
+             * @default point_in_time
+             */
+            text_state: string;
+            /** Text Superseded */
+            text_superseded?: boolean | null;
             /** Title */
             title: string;
         };
@@ -526,6 +575,17 @@ export interface components {
         LawSearchResult: {
             /** Article Count */
             article_count?: number | null;
+            /**
+             * Articles Indexed
+             * @description Whether *we* broke this law into articles — not whether it has any.
+             *
+             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
+             *     most of the corpora where it appears that is false: the articles are in
+             *     the text and we did not index them. Callers asking for an article, or
+             *     grepping one, need to tell "no such article" from "no index here", so the
+             *     distinction is stated rather than left to be inferred from a zero.
+             */
+            readonly articles_indexed: boolean;
             /** Country */
             country: string;
             /** Id */
@@ -536,10 +596,19 @@ export interface components {
             law_type: string;
             /** Publication Date */
             publication_date?: string | null;
+            /** Reform Count */
+            reform_count?: number | null;
             /** Short Title */
             short_title?: string | null;
             /** Status */
             status?: string | null;
+            /**
+             * Text State
+             * @default point_in_time
+             */
+            text_state: string;
+            /** Text Superseded */
+            text_superseded?: boolean | null;
             /** Title */
             title: string;
             /** Title Snippet */
@@ -585,6 +654,8 @@ export interface components {
             date: string;
             /** Source Id */
             source_id?: string | null;
+            /** Source Title */
+            source_title?: string | null;
         };
         /** ReformsResponse */
         ReformsResponse: {
@@ -1209,6 +1280,8 @@ export interface operations {
                 from_date?: string | null;
                 /** @description Filter to date (YYYY-MM-DD inclusive) */
                 to_date?: string | null;
+                /** @description Filter by what the body of the text is: point_in_time (the law as in force on its date), current (the latest text the source publishes), as_enacted (the act as published, amendments not incorporated). Omit for all states. */
+                text_state?: string | null;
             };
             header?: never;
             path: {

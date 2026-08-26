@@ -99,6 +99,7 @@ export type {
   ReformsResponse,
   StatsOptions,
   StatsResponse,
+  TextState,
   WebhookCreateOptions,
   WebhookDeliveriesOptions,
   WebhookDeliveriesPage,

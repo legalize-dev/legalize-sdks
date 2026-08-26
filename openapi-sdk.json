@@ -124,8 +124,16 @@
         "type": "object"
       },
       "LawAtDateResponse": {
-        "description": "A law as it stood on a date, plus what that answer actually resolved to.\n\n``sha`` and ``version_date`` are returned so the caller can verify the\nanswer and cite the exact version, rather than trusting the date they\nasked for.",
+        "description": "A law as it stood on a date, plus what that answer actually resolved to.\n\n``sha`` and ``version_date`` are returned so the caller can verify the\nanswer and cite the exact version, rather than trusting the date they\nasked for.\n\n``citation`` is that same answer as one line to paste into a filing, in the\nlanguage of the jurisdiction, and ``citation_url`` is the public page the\nother side can open to check it.",
         "properties": {
+          "citation": {
+            "title": "Citation",
+            "type": "string"
+          },
+          "citation_url": {
+            "title": "Citation Url",
+            "type": "string"
+          },
           "content_md": {
             "title": "Content Md",
             "type": "string"
@@ -166,6 +174,8 @@
           "date",
           "sha",
           "version_date",
+          "citation",
+          "citation_url",
           "content_md"
         ],
         "title": "LawAtDateResponse",
@@ -184,6 +194,12 @@
               }
             ],
             "title": "Article Count"
+          },
+          "articles_indexed": {
+            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "readOnly": true,
+            "title": "Articles Indexed",
+            "type": "boolean"
           },
           "content_md": {
             "anyOf": [
@@ -276,6 +292,17 @@
             ],
             "title": "Publication Date"
           },
+          "reform_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reform Count"
+          },
           "short_title": {
             "anyOf": [
               {
@@ -309,6 +336,22 @@
             ],
             "title": "Status"
           },
+          "text_state": {
+            "default": "point_in_time",
+            "title": "Text State",
+            "type": "string"
+          },
+          "text_superseded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Superseded"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -318,7 +361,8 @@
           "id",
           "title",
           "country",
-          "law_type"
+          "law_type",
+          "articles_indexed"
         ],
         "title": "LawDetail",
         "type": "object"
@@ -336,6 +380,12 @@
               }
             ],
             "title": "Article Count"
+          },
+          "articles_indexed": {
+            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "readOnly": true,
+            "title": "Articles Indexed",
+            "type": "boolean"
           },
           "country": {
             "title": "Country",
@@ -405,6 +455,17 @@
             ],
             "title": "Publication Date"
           },
+          "reform_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reform Count"
+          },
           "short_title": {
             "anyOf": [
               {
@@ -438,6 +499,22 @@
             ],
             "title": "Status"
           },
+          "text_state": {
+            "default": "point_in_time",
+            "title": "Text State",
+            "type": "string"
+          },
+          "text_superseded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Superseded"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -447,7 +524,8 @@
           "id",
           "title",
           "country",
-          "law_type"
+          "law_type",
+          "articles_indexed"
         ],
         "title": "LawMeta",
         "type": "object"
@@ -465,6 +543,12 @@
               }
             ],
             "title": "Article Count"
+          },
+          "articles_indexed": {
+            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "readOnly": true,
+            "title": "Articles Indexed",
+            "type": "boolean"
           },
           "country": {
             "title": "Country",
@@ -500,6 +584,17 @@
             ],
             "title": "Publication Date"
           },
+          "reform_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reform Count"
+          },
           "short_title": {
             "anyOf": [
               {
@@ -522,6 +617,22 @@
             ],
             "title": "Status"
           },
+          "text_state": {
+            "default": "point_in_time",
+            "title": "Text State",
+            "type": "string"
+          },
+          "text_superseded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Superseded"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -542,7 +653,8 @@
           "id",
           "title",
           "country",
-          "law_type"
+          "law_type",
+          "articles_indexed"
         ],
         "title": "LawSearchResult",
         "type": "object"
@@ -677,6 +789,17 @@
               }
             ],
             "title": "Source Id"
+          },
+          "source_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Title"
           }
         },
         "required": [
@@ -1639,7 +1762,7 @@
     },
     "/api/v1/{country}/laws": {
       "get": {
-        "description": "Search and list laws for a country.\n\nWithout `q`: returns a paginated list of all laws, sorted by date (newest first).\nWith `q`: full-text search with relevance ranking.\n\nAll filters (law_type, year, status, jurisdiction, from_date, to_date) apply\nin both listing and search modes. Use `sort` to change order.",
+        "description": "Search and list laws for a country.\n\nWithout `q`: returns a paginated list of all laws, sorted by date (newest first).\nWith `q`: full-text search with relevance ranking.\n\nAll filters (law_type, year, status, jurisdiction, from_date, to_date, text_state)\napply in both listing and search modes. Use `sort` to change order.",
         "operationId": "api_list_laws_api_v1__country__laws_get",
         "parameters": [
           {
@@ -1817,6 +1940,24 @@
               "description": "Filter to date (YYYY-MM-DD inclusive)",
               "title": "To Date"
             }
+          },
+          {
+            "description": "Filter by what the body of the text is: point_in_time (the law as in force on its date), current (the latest text the source publishes), as_enacted (the act as published, amendments not incorporated). Omit for all states.",
+            "in": "query",
+            "name": "text_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by what the body of the text is: point_in_time (the law as in force on its date), current (the latest text the source publishes), as_enacted (the act as published, amendments not incorporated). Omit for all states.",
+              "title": "Text State"
+            }
           }
         ],
         "responses": {
@@ -1943,7 +2084,7 @@
     },
     "/api/v1/{country}/laws/{law_id}/at": {
       "get": {
-        "description": "Time-travel by date: the text of a law as published on or before `date`.\n\nResolves the date to a version server-side, so callers do not have to walk\n`/commits` looking for a SHA. The resolved `sha` and `version_date` come\nback with the text so the answer stays verifiable.\n\nThe rule is **published on or before** the date, not \"in force on\" it: the\ndates are official publication dates, so a reform still within its vacatio\nlegis resolves as already applying. Cite accordingly.",
+        "description": "Time-travel by date: the text of a law as published on or before `date`.\n\nResolves the date to a version server-side, so callers do not have to walk\n`/commits` looking for a SHA. The resolved `sha` and `version_date` come\nback with the text so the answer stays verifiable.\n\nThe rule is **published on or before** the date, not \"in force on\" it: the\ndates are official publication dates, so a reform still within its vacatio\nlegis resolves as already applying. Cite accordingly \u2014 `citation` says so in\nwords, and `citation_url` is the page that backs it up.",
         "operationId": "api_law_at_date_api_v1__country__laws__law_id__at_get",
         "parameters": [
           {

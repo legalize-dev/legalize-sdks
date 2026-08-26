@@ -529,3 +529,131 @@ func parseIntSafe(s string) (int, error) {
 	}
 	return n, nil
 }
+
+// ---- text state -------------------------------------------------------
+//
+// Portugal serves 166,422 of its 171,739 acts as enacted: the body is the
+// original and later amendments are separate acts. These four checks are what
+// lets a caller tell a text it can quote from one it cannot.
+
+func TestLaws_List_SendsTextState(t *testing.T) {
+	var captured *http.Request
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r
+		resp := PaginatedLaws{Country: "pt", Page: 1, PerPage: 50, Results: []LawSearchResult{}}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	if _, err := c.Laws().List(context.Background(), "pt", &LawsListOptions{
+		TextState: String(TextStateAsEnacted),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := captured.URL.Query().Get("text_state"); got != "as_enacted" {
+		t.Errorf("text_state: %q", got)
+	}
+}
+
+func TestLaws_Search_SendsTextState(t *testing.T) {
+	var captured *http.Request
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r
+		resp := PaginatedLaws{Country: "pt", Page: 1, PerPage: 50, Results: []LawSearchResult{}}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	if _, err := c.Laws().Search(context.Background(), "pt", "lei", &LawsListOptions{
+		TextState: String(TextStatePointInTime),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := captured.URL.Query().Get("text_state"); got != "point_in_time" {
+		t.Errorf("text_state: %q", got)
+	}
+}
+
+func TestLaws_List_DecodesSupersededText(t *testing.T) {
+	// In force, and not quotable: the body predates twelve amendments. Status
+	// says "in_force" for both this and a consolidated text — TextSuperseded is
+	// the only field that separates them.
+	body := `{"country":"pt","total":1,"page":1,"per_page":50,"results":[{"id":"x",
+	  "title":"Lei","country":"pt","law_type":"lei","status":"in_force",
+	  "text_state":"as_enacted","reform_count":12,"text_superseded":true,
+	  "articles_indexed":false}]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	out, err := c.Laws().List(context.Background(), "pt", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	law := out.Results[0]
+	if law.TextState != TextStateAsEnacted {
+		t.Errorf("text_state: %q", law.TextState)
+	}
+	if law.ReformCount == nil || *law.ReformCount != 12 {
+		t.Errorf("reform_count: %v", law.ReformCount)
+	}
+	if law.TextSuperseded == nil || !*law.TextSuperseded {
+		t.Errorf("text_superseded: %v", law.TextSuperseded)
+	}
+}
+
+func TestReforms_List_NamesTheAmendingAct(t *testing.T) {
+	body := `{"law_id":"x","total":1,"offset":0,"limit":100,"reforms":[
+	  {"date":"2023-07-04","source_id":"DRE-2023-27-215097635",
+	   "source_title":"Lei n.º 27/2023"}]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	out, err := c.Reforms().List(context.Background(), "pt", "x", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := out.Reforms[0].SourceTitle
+	if got == nil || *got != "Lei n.º 27/2023" {
+		t.Errorf("source_title: %v", got)
+	}
+}
+
+func TestLaws_Iter_KeepsTheFilterOnEveryPage(t *testing.T) {
+	// The Node SDK rebuilt this options object field by field and dropped
+	// text_state on the way, while list and search honored it. Go copies the
+	// struct, so a new field comes along on its own — this pins that.
+	var seen []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.URL.Query().Get("text_state"))
+		page := `{"country":"pt","total":2,"page":1,"per_page":1,"results":[{"id":"a",
+		  "title":"Lei","country":"pt","law_type":"lei","text_state":"as_enacted"}]}`
+		if r.URL.Query().Get("page") == "2" {
+			page = `{"country":"pt","total":2,"page":2,"per_page":1,"results":[{"id":"b",
+			  "title":"Lei","country":"pt","law_type":"lei","text_state":"as_enacted"}]}`
+		}
+		_, _ = w.Write([]byte(page))
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	it := c.Laws().Iter(context.Background(), "pt", 1, 2,
+		&LawsListOptions{TextState: String(TextStateAsEnacted)})
+	for {
+		if _, ok, err := it.Next(context.Background()); err != nil {
+			t.Fatal(err)
+		} else if !ok {
+			break
+		}
+	}
+	if len(seen) < 2 {
+		t.Fatalf("expected at least two pages, got %d", len(seen))
+	}
+	for i, got := range seen {
+		if got != "as_enacted" {
+			t.Errorf("page %d lost the filter: %q", i+1, got)
+		}
+	}
+}

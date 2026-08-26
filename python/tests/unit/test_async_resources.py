@@ -42,6 +42,10 @@ LAW_META = {
     "country": "es",
     "law_type": "ley_organica",
     "title": "Ley Orgánica 3/2018",
+    # Derived server-side, so the API always sends them and the model requires
+    # them. A fixture without them is not a response this API can return.
+    "articles_indexed": True,
+    "text_superseded": False,
 }
 
 
@@ -169,6 +173,8 @@ async def test_laws_at_date(aclient, handler):
             "date": "2012-09-20",
             "sha": "a" * 7,
             "version_date": "2011-09-27",
+            "citation": "Ley x, versión de 2011-09-27",
+            "citation_url": "https://legalize.dev/es/law/x/date/2012-09-20",
             "content_md": "c",
         },
     )

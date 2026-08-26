@@ -97,6 +97,10 @@ LAW_META = {
     "country": "es",
     "law_type": "ley_organica",
     "title": "Ley Orgánica 3/2018",
+    # Derived server-side, so the API always sends them and the model requires
+    # them. A fixture without them is not a response this API can return.
+    "articles_indexed": True,
+    "text_superseded": False,
 }
 
 
@@ -260,6 +264,8 @@ class TestLaws:
                 "date": "2012-09-20",
                 "sha": "abc1234",
                 "version_date": "2011-09-27",
+                "citation": "Ley x, versión de 2011-09-27",
+                "citation_url": "https://legalize.dev/es/law/x/date/2012-09-20",
                 "content_md": "# As published by then",
             },
         )
@@ -278,12 +284,106 @@ class TestLaws:
                 "date": "1800-01-01",
                 "sha": None,
                 "version_date": None,
+                "citation": "Ley x",
+                "citation_url": "https://legalize.dev/es/law/x/date/1800-01-01",
                 "content_md": "",
             },
         )
         out = client.laws.at_date("es", "x", "1800-01-01")
         assert out.sha is None
         assert out.content_md == ""
+
+
+class TestTextState:
+    """The four things a client needs to tell a quotable text from a stale one."""
+
+    def test_the_filter_reaches_the_wire(self, client, handler):
+        received = capture(
+            handler,
+            body={"country": "pt", "total": 0, "page": 1, "per_page": 50, "results": []},
+        )
+        client.laws.list("pt", text_state="as_enacted")
+        assert received["request"].url.params["text_state"] == "as_enacted"
+
+    def test_the_filter_reaches_the_wire_when_searching(self, client, handler):
+        received = capture(
+            handler,
+            body={"country": "pt", "total": 0, "page": 1, "per_page": 50, "results": []},
+        )
+        client.laws.search("pt", q="lei", text_state="point_in_time")
+        assert received["request"].url.params["text_state"] == "point_in_time"
+
+    def test_a_result_says_whether_its_text_is_still_the_law(self, client, handler):
+        """An act in force whose body predates twelve amendments: in_force, and
+        not quotable. Only ``text_superseded`` separates the two."""
+        capture(
+            handler,
+            body={
+                "country": "pt",
+                "total": 1,
+                "page": 1,
+                "per_page": 50,
+                "results": [
+                    {
+                        **LAW_META,
+                        "status": "in_force",
+                        "text_state": "as_enacted",
+                        "reform_count": 12,
+                        "text_superseded": True,
+                    }
+                ],
+            },
+        )
+        law = client.laws.list("pt").results[0]
+        assert law.text_state == "as_enacted"
+        assert law.reform_count == 12
+        assert law.text_superseded is True
+
+    def test_iter_keeps_the_filter_on_every_page(self, client, handler):
+        """The Node SDK rebuilt its iterator options field by field and dropped
+        text_state on the way, while list and search honored it. This pins the
+        Python side, which forwards each filter explicitly."""
+        seen: list[str | None] = []
+
+        def h(req):
+            seen.append(req.url.params.get("text_state"))
+            page = 1 if req.url.params.get("page") == "1" else 2
+            return httpx.Response(
+                200,
+                json={
+                    "country": "pt",
+                    "total": 2,
+                    "page": page,
+                    "per_page": 1,
+                    "results": [dict(LAW_META, id=f"law-{page}")],
+                },
+                request=req,
+            )
+
+        handler[0] = h
+        list(client.laws.iter("pt", per_page=1, limit=2, text_state="as_enacted"))
+        assert len(seen) >= 2
+        assert set(seen) == {"as_enacted"}
+
+    def test_a_reform_names_the_act_that_made_it(self, client, handler):
+        capture(
+            handler,
+            body={
+                "law_id": "x",
+                "total": 1,
+                "offset": 0,
+                "limit": 100,
+                "reforms": [
+                    {
+                        "date": "2023-07-04",
+                        "source_id": "DRE-2023-27-215097635",
+                        "source_title": "Lei n.º 27/2023",
+                    }
+                ],
+            },
+        )
+        reform = client.reforms.list("pt", "x").reforms[0]
+        assert reform.source_title == "Lei n.º 27/2023"
 
 
 # ---- reforms -----------------------------------------------------------
