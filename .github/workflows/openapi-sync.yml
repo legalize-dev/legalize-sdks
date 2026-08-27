@@ -1,5 +1,21 @@
 name: openapi-sync
 
+# Detects drift between production's OpenAPI spec and the copy committed here.
+# It does NOT open a pull request. It used to try, and failed on 18 consecutive
+# scheduled runs with "GitHub Actions is not permitted to create or approve pull
+# requests" — that toggle lives on the `legalize-dev` org, not on this repo, and
+# turning it on would grant Actions PR-creation across all 40+ org repos,
+# including the 34 country corpora, to automate one file in this one.
+#
+# So the job's contract is now: go red when the spec has moved, and let
+# failure-alert pick it up. Reconciling is two commands on a laptop:
+#
+#   ./scripts/fetch_openapi.sh && python scripts/filter_openapi.py
+#   pip install -e "python[dev]" && ./scripts/gen_models.sh
+#
+# then commit the result. `contents: write` is gone with the PR step; this job
+# only ever needs to read.
+
 on:
   schedule:
     - cron: "0 6 * * *"  # daily at 06:00 UTC
@@ -11,9 +27,6 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -30,15 +43,17 @@ jobs:
       - name: Run tests
         working-directory: python
         run: pytest -q
-      - name: Open PR if spec changed
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          commit-message: "chore: sync OpenAPI spec from prod"
-          title: "chore: sync OpenAPI spec from prod"
-          body: |
-            Automated daily sync from https://legalize.dev/openapi.json.
+      - name: Fail if the OpenAPI spec or the generated models drifted
+        run: |
+          if ! git diff --exit-code; then
+            echo "::error::production's OpenAPI spec no longer matches the copy committed here."
+            echo "::error::Regenerate locally and commit — see this workflow's header comment."
+            exit 1
+          fi
 
-            The filter + model-gen pipeline has run and tests pass. Review the
-            diff for any unexpected schema changes.
-          branch: auto/openapi-sync
-          delete-branch: true
+      # Tests passing is not the same as the contract being unchanged. On
+      # 2026-08-25 production grew three required fields (articles_indexed,
+      # citation, citation_url) and the regenerated models failed 14 hand-written
+      # fixtures still shaped for the old contract — the drift was real and the
+      # suite caught it only because the fixtures happened to be strict. Keep the
+      # diff check above even when the tests are green.
