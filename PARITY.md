@@ -188,8 +188,10 @@ carry both on `LawSummary`, `LawSearchResult`, `LawMeta` and `LawDetail`.
 | `current` | the latest text the source publishes | yes |
 | `as_enacted` | the act as published, amendments not folded in | only if nothing amended it |
 
-Absent means `point_in_time`, which is what 13 of the 14 countries publish, so
-SDKs MUST default the field to that rather than to null.
+Absent means `point_in_time`, not unknown: the corpus only emits the field when
+there is something to warn about (Format Spec v0.3 added it that way so no
+existing file changed meaning). SDKs MUST default the field to that rather than
+to null.
 
 **`text_superseded`** — whether the body is out of date. This is the field a
 client decides on: a law can be `status: in_force` and its text still be

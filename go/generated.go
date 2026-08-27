@@ -56,8 +56,8 @@ type LawAtDateResponse struct {
 }
 
 // TextState values (Legalize Format Spec v0.3): what the body of a law
-// actually is. An absent field means TextStatePointInTime, which is what 13 of
-// the 14 countries publish.
+// actually is. The corpus only emits the field when there is something to warn
+// about, so an absent field means TextStatePointInTime, not unknown.
 const (
 	// TextStatePointInTime is the law as in force on its date.
 	TextStatePointInTime = "point_in_time"

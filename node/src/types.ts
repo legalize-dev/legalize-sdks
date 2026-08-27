@@ -69,7 +69,11 @@ export type LawSort =
  * later does not need an SDK bump to be usable.
  */
 export type TextState =
-  /** The law as in force on its date — what 13 of the 14 countries publish. */
+  /**
+   * The law as in force on its date. Also what an absent field means, not
+   * unknown: the server only sends `text_state` when there is something to
+   * warn about.
+   */
   | "point_in_time"
   /** The latest text the source publishes, whatever date it corresponds to. */
   | "current"

@@ -5,7 +5,7 @@ name: openapi-sync
 # scheduled runs with "GitHub Actions is not permitted to create or approve pull
 # requests" — that toggle lives on the `legalize-dev` org, not on this repo, and
 # turning it on would grant Actions PR-creation across all 40+ org repos,
-# including the 34 country corpora, to automate one file in this one.
+# every country corpus included, to automate one file in this one.
 #
 # So the job's contract is now: go red when the spec has moved, and let
 # failure-alert pick it up. Reconciling is two commands on a laptop:
