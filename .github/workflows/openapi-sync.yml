@@ -30,6 +30,13 @@ jobs:
       - name: Run tests
         working-directory: python
         run: pytest -q
+      # ponytail: must run before the PR step below — create-pull-request
+      # commits any working-tree diff to a branch and resets the checkout
+      # back to a clean `main`, so a `git diff` placed *after* it always
+      # sees nothing, drifted or not (confirmed from this repo's own run
+      # logs). This is the only point where the check is meaningful.
+      - name: Fail if the OpenAPI spec/models drifted from the committed version
+        run: git diff --exit-code
       - name: Open PR if spec changed
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:

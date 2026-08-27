@@ -7,7 +7,7 @@ name: integration-alert
 
 on:
   workflow_run:
-    workflows: [python-integration, node-integration, go-integration]
+    workflows: [python-integration, node-integration, go-integration, openapi-sync]
     types: [completed]
 
 permissions:
