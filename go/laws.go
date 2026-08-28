@@ -16,11 +16,14 @@ type LawsService struct {
 // this dimension". Use legalize.String / Int helpers to set scalars
 // inline.
 type LawsListOptions struct {
-	Page         *int
-	PerPage      *int
-	LawType      []string
-	Year         *int
-	Status       *string
+	Page    *int
+	PerPage *int
+	LawType []string
+	Year    *int
+	Status  *string
+	// Jurisdiction keeps only laws from one jurisdiction: a region code, or
+	// JurisdictionNational for the norms of the state itself. Nil returns both
+	// together, which is what this endpoint has always done.
 	Jurisdiction *string
 	FromDate     *string
 	ToDate       *string

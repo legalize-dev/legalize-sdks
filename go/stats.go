@@ -12,6 +12,8 @@ type StatsService struct {
 
 // StatsOptions holds optional filters for stats.Retrieve.
 type StatsOptions struct {
+	// Jurisdiction scopes the statistics to one jurisdiction: a region code, or
+	// JurisdictionNational for the norms of the state itself.
 	Jurisdiction *string
 }
 

@@ -14,6 +14,12 @@ export interface paths {
         /**
          * Health Check
          * @description Health check for monitoring. No authentication required.
+         *
+         *     Deliberately a sync def, not async: the body does blocking psycopg2 I/O
+         *     (get_connection/execute/close). An async handler runs directly on the
+         *     event loop, so a slow or hung DB would block every other request this
+         *     worker is serving, not just this one. FastAPI dispatches a sync path
+         *     function to a thread pool instead, which keeps that I/O off the loop.
          */
         get: operations["health_check_api_health_get"];
         put?: never;
@@ -1270,7 +1276,7 @@ export interface operations {
                 year?: number | null;
                 /** @description Filter by status: vigente, derogada */
                 status?: string | null;
-                /** @description Filter by jurisdiction code */
+                /** @description Filter by jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus). */
                 jurisdiction?: string | null;
                 /** @description Full-text search query */
                 q?: string | null;
@@ -1625,6 +1631,7 @@ export interface operations {
     api_stats_api_v1__country__stats_get: {
         parameters: {
             query?: {
+                /** @description Scope the statistics to one jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus). */
                 jurisdiction?: string | null;
             };
             header?: never;

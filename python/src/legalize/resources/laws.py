@@ -10,6 +10,13 @@ Covers:
 - ``at_commit``                — time-travel to a specific SHA
 - ``at_date``                  — time-travel to a date, SHA resolved for you
 
+Every listing and search method takes ``jurisdiction``. Where a country's
+catalogue carries its regions' gazettes as well as the state's — Spain's carries
+the comunidades autónomas — omitting it returns both together. Pass a region
+code for one region, or ``"national"`` for the norms of the state itself, which
+carry no jurisdiction at all and so have no code of their own.
+``client.jurisdictions.list(country)`` names the region codes a country has.
+
 Every listing and search method takes ``text_state`` to filter on what the body
 of a law actually is: ``point_in_time`` (the law as in force on its date),
 ``current`` (the latest text the source publishes) or ``as_enacted`` (the act as

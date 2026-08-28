@@ -69,6 +69,19 @@ const (
 	TextStateAsEnacted = "as_enacted"
 )
 
+// Jurisdiction values that are not a region code.
+//
+// Where a country's catalogue carries its regions' gazettes as well as the
+// state's — Spain's carries the comunidades autónomas — a request with no
+// jurisdiction returns both together. The norms of the state itself carry no
+// jurisdiction at all, so there is no code to pass for them: that is what
+// JurisdictionNational is for. Every other value is a region code, and
+// Jurisdictions.List names the ones a country has.
+const (
+	// JurisdictionNational keeps only the norms of the state itself.
+	JurisdictionNational = "national"
+)
+
 // LawDetail is a full law with Markdown content.
 //
 // TextSuperseded answers "can I quote this as the law in force?": true when the

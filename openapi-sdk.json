@@ -1054,13 +1054,13 @@
   "info": {
     "description": "Open legislation API. Every law as structured data, every reform as a diff.",
     "title": "Legalize API",
-    "version": "0.11.0"
+    "version": "0.18.0"
   },
   "openapi": "3.1.0",
   "paths": {
     "/api/health": {
       "get": {
-        "description": "Health check for monitoring. No authentication required.",
+        "description": "Health check for monitoring. No authentication required.\n\nDeliberately a sync def, not async: the body does blocking psycopg2 I/O\n(get_connection/execute/close). An async handler runs directly on the\nevent loop, so a slow or hung DB would block every other request this\nworker is serving, not just this one. FastAPI dispatches a sync path\nfunction to a thread pool instead, which keeps that I/O off the loop.",
         "operationId": "health_check_api_health_get",
         "responses": {
           "200": {
@@ -1852,7 +1852,7 @@
             }
           },
           {
-            "description": "Filter by jurisdiction code",
+            "description": "Filter by jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus).",
             "in": "query",
             "name": "jurisdiction",
             "required": false,
@@ -1865,7 +1865,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by jurisdiction code",
+              "description": "Filter by jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus).",
               "title": "Jurisdiction"
             }
           },
@@ -2505,6 +2505,7 @@
             }
           },
           {
+            "description": "Scope the statistics to one jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus).",
             "in": "query",
             "name": "jurisdiction",
             "required": false,
@@ -2517,6 +2518,7 @@
                   "type": "null"
                 }
               ],
+              "description": "Scope the statistics to one jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus).",
               "title": "Jurisdiction"
             }
           }

@@ -305,6 +305,18 @@ class TestTextState:
         client.laws.list("pt", text_state="as_enacted")
         assert received["request"].url.params["text_state"] == "as_enacted"
 
+    def test_the_national_jurisdiction_reaches_the_wire(self, client, handler):
+        """`national` is not a region code — it is how you ask for the norms of
+        the state itself, which carry no jurisdiction at all. The SDK forwards
+        it like any other value; this pins that nobody starts validating it
+        against the region list."""
+        received = capture(
+            handler,
+            body={"country": "es", "total": 0, "page": 1, "per_page": 50, "results": []},
+        )
+        client.laws.list("es", jurisdiction="national")
+        assert received["request"].url.params["jurisdiction"] == "national"
+
     def test_the_filter_reaches_the_wire_when_searching(self, client, handler):
         received = capture(
             handler,

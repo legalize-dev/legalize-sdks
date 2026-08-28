@@ -657,3 +657,26 @@ func TestLaws_Iter_KeepsTheFilterOnEveryPage(t *testing.T) {
 		}
 	}
 }
+
+// `national` is not a region code: it is how a caller asks for the norms of the
+// state itself, which carry no jurisdiction at all and so have none to name.
+// The SDK forwards it like any other value — this pins that nobody starts
+// validating the field against the region list.
+func TestLaws_List_SendsNationalJurisdiction(t *testing.T) {
+	var captured *http.Request
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		captured = r
+		resp := PaginatedLaws{Country: "es", Page: 1, PerPage: 50, Results: []LawSearchResult{}}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer srv.Close()
+	c, _ := New(WithAPIKey("leg_t"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	if _, err := c.Laws().List(context.Background(), "es", &LawsListOptions{
+		Jurisdiction: String(JurisdictionNational),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := captured.URL.Query().Get("jurisdiction"); got != "national" {
+		t.Errorf("jurisdiction: %q", got)
+	}
+}

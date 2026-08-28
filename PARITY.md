@@ -116,6 +116,11 @@ semantic behaviour.
 
 ### laws
 
+`jurisdiction` takes a region code, or `national` for the norms of the state
+itself — those carry no jurisdiction at all, so they have no code of their own.
+Omit it and a country's regions come back mixed in with its state law. The same
+value scopes `stats.retrieve`.
+
 - `laws.list(country, *, page=1, per_page=50, law_type, year, status, jurisdiction, from_date, to_date, sort, text_state)` → `PaginatedLaws`
 - `laws.search(country, q, *, page=1, per_page=50, ...)` → `PaginatedLaws`
   (convenience wrapper that sets `q=...`)

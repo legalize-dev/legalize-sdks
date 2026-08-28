@@ -1,4 +1,9 @@
-"""``/api/v1/{country}/stats`` — aggregate statistics for a country."""
+"""``/api/v1/{country}/stats`` — aggregate statistics for a country.
+
+``jurisdiction`` scopes the numbers: a region code for one region, or
+``"national"`` for the norms of the state itself. Omit it for the whole
+catalogue, regions included.
+"""
 
 from __future__ import annotations
 

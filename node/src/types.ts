@@ -82,12 +82,30 @@ export type TextState =
   // Forward-compat:
   | (string & {});
 
+/**
+ * Which jurisdiction's norms to keep.
+ *
+ * Where a country's catalogue carries its regions' gazettes as well as the
+ * state's — Spain's carries the comunidades autónomas — omitting this returns
+ * both together. The norms of the state itself carry no jurisdiction at all, so
+ * there is no code for them: that is what `"national"` is for.
+ *
+ * Open like `LawSort`: region codes are the server's vocabulary, and
+ * `jurisdictions.list` names the ones a country has.
+ */
+export type Jurisdiction =
+  /** Only the norms of the state itself, with no region's gazette mixed in. */
+  | "national"
+  // Forward-compat: any region code the server serves ("es-ct", "es-pv", ...).
+  | (string & {});
+
 /** Options shared by `laws.list` and `laws.iter` filter surfaces. */
 export interface LawFilterOptions {
   lawType?: string | string[];
   year?: number;
   status?: string;
-  jurisdiction?: string;
+  /** Keep only one jurisdiction's laws. Omit for every jurisdiction at once. */
+  jurisdiction?: Jurisdiction;
   fromDate?: string;
   toDate?: string;
   sort?: LawSort;
@@ -121,7 +139,8 @@ export interface ReformIterOptions {
 }
 
 export interface StatsOptions {
-  jurisdiction?: string;
+  /** Keep only one jurisdiction's laws. Omit for every jurisdiction at once. */
+  jurisdiction?: Jurisdiction;
 }
 
 /** Webhook endpoint CRUD types — server-side response. */

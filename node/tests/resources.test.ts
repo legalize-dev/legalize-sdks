@@ -108,6 +108,15 @@ describe("text state", () => {
     expect(qParams(calls[0]!).text_state).toBe("as_enacted");
   });
 
+  it("sends the national jurisdiction, which is not a region code", async () => {
+    // `national` asks for the norms of the state itself, which carry no
+    // jurisdiction at all. Forwarded like any other value; this pins that
+    // nobody starts validating the field against the region list.
+    const { client, calls } = buildClient(PAGE);
+    await client.laws.list("es", { jurisdiction: "national" });
+    expect(qParams(calls[0]!).jurisdiction).toBe("national");
+  });
+
   it("sends textState as text_state when searching", async () => {
     const { client, calls } = buildClient(PAGE);
     await client.laws.search("pt", "lei", { textState: "point_in_time" });

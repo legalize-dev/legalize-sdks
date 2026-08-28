@@ -81,6 +81,7 @@ export type {
   CommitsResponse,
   CountryInfo,
   HTTPValidationError,
+  Jurisdiction,
   JurisdictionInfo,
   LawAtCommitResponse,
   LawAtDateResponse,
