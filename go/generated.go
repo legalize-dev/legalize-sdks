@@ -129,6 +129,8 @@ type LawDetail struct {
 	LastUpdated     *string        `json:"last_updated,omitempty"`
 	Extra           map[string]any `json:"extra,omitempty"`
 	Frontmatter     map[string]any `json:"frontmatter,omitempty"`
+	Kind            string         `json:"kind"`
+	Warning         *string        `json:"warning"`
 }
 
 // LawMeta is law metadata without content — fast, no GitHub fetch.

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `LawDetail` retains `kind` and `warning`, including source completeness
+  warnings on the latest response. Historical models already accept `incomplete`.
+
 - Historical response models retain source coverage, status, source URL,
   warnings, amendment references and source notes. `kind` accepts `current`
   and future string values; nullable flags remain distinct from false.

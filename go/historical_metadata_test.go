@@ -76,3 +76,27 @@ func TestHistoricalMetadataSurvivesResources(t *testing.T) {
 		}
 	}
 }
+
+func TestLatestSourceWarningSurvivesResource(t *testing.T) {
+	warning := "The source omits a provision; consult the amending Act."
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if err := json.NewEncoder(w).Encode(map[string]any{
+			"id": "IE-2014-act-38", "title": "Companies Act 2014", "country": "ie",
+			"law_type": "act", "kind": "incomplete", "text_state": "point_in_time", "warning": warning,
+		}); err != nil {
+			t.Error(err)
+		}
+	}))
+	defer srv.Close()
+	client, err := New(WithAPIKey("leg_test"), WithBaseURL(srv.URL), WithMaxRetries(0))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := client.Laws().Retrieve(context.Background(), "ie", "IE-2014-act-38")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Kind != "incomplete" || got.TextState != "point_in_time" || got.Warning == nil || *got.Warning != warning {
+		t.Fatalf("Source warning lost: %#v", got)
+	}
+}

@@ -328,6 +328,15 @@ describe("laws.retrieve / meta / commits / atCommit / atDate", () => {
       }
     },
   );
+  it("retrieve preserves source completeness warnings", async () => {
+    const warning = "The source omits a provision; consult the amending Act.";
+    const { client } = buildClient({ ...LAW_META, kind: "incomplete", warning,
+      text_state: "point_in_time", content_md: "Available text." });
+    const out = await client.laws.retrieve("es", LAW_META.id);
+    expect(out.kind).toBe("incomplete");
+    expect(out.warning).toBe(warning);
+    expect(out.text_state).toBe("point_in_time");
+  });
   it("retrieve", async () => {
     const { client, calls } = buildClient({ ...LAW_META, content_md: "# body" });
     const out = await client.laws.retrieve("es", "ley_organica_3_2018");

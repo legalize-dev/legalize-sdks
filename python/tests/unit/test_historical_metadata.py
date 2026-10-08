@@ -56,3 +56,36 @@ async def test_historical_metadata_survives_async_resources(aclient, handler, st
     assert result.text_state == state
     assert result.warning == expected["warning"]
     assert result.in_force is None
+
+
+def latest_payload():
+    return {
+        "id": "IE-2014-act-38",
+        "country": "ie",
+        "title": "Companies Act 2014",
+        "law_type": "act",
+        "text_state": "point_in_time",
+        "kind": "incomplete",
+        "warning": "The source omits a provision; consult the amending Act.",
+        "content_md": "Available text.",
+        "articles_indexed": False,
+    }
+
+
+def test_latest_source_warning_survives_sync_resource(client, handler):
+    expected = latest_payload()
+    handler[0] = lambda request: httpx.Response(200, json=expected, request=request)
+    result = client.laws.retrieve("ie", expected["id"])
+    assert result.kind == "incomplete"
+    assert result.warning == expected["warning"]
+    assert result.text_state == "point_in_time"
+
+
+async def test_latest_source_warning_survives_async_resource(aclient, handler):
+    expected = latest_payload()
+    handler[0] = lambda request: httpx.Response(200, json=expected, request=request)
+    async with aclient:
+        result = await aclient.laws.retrieve("ie", expected["id"])
+    assert result.kind == "incomplete"
+    assert result.warning == expected["warning"]
+    assert result.text_state == "point_in_time"

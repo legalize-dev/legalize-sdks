@@ -230,6 +230,10 @@ not establish historical wording, even when a request specifies a date or SHA.
 version cutoff; it does not claim entry into force. `current_snapshot` identifies
 current-only coverage. Treat basis values as open strings for compatibility.
 
+A known source omission is `kind: incomplete` with an explicit `warning`;
+`text_state` still describes its temporal coverage. Existing temporal warnings
+remain present. `LawDetail` also preserves `kind` and `warning` on latest reads.
+
 The fields are additive and may be absent in older server responses. Preserve
 null booleans as unknown, distinct from false. Keep `kind` and `text_state` as
 open strings so a future source state does not make deserialization fail.

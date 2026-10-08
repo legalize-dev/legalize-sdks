@@ -242,6 +242,8 @@ export interface paths {
          *     Fetches content from GitHub. Slower than /meta for metadata-only use cases.
          *     Free tier: basic fields + content_md.
          *     Pro tier: adds department, source, last_updated, extra (country-specific metadata).
+         *     Read `kind` and `warning` before quoting: `incomplete` identifies a source
+         *     integrity warning, independently of the body's `text_state`.
          */
         get: operations["api_get_law_api_v1__country__laws__law_id__get"];
         put?: never;
@@ -586,6 +588,11 @@ export interface components {
             id: string;
             /** Jurisdiction */
             jurisdiction?: string | null;
+            /**
+             * Kind
+             * @default consolidated
+             */
+            kind: string;
             /** Last Updated */
             last_updated?: string | null;
             /** Law Type */
@@ -609,6 +616,11 @@ export interface components {
             text_superseded?: boolean | null;
             /** Title */
             title: string;
+            /**
+             * Warning
+             * @default null
+             */
+            warning: string | null;
         };
         /**
          * LawMeta

@@ -97,6 +97,7 @@ class LawDetail(BaseModel):
     frontmatter: dict[str, Any] | None = Field(None, title="Frontmatter")
     id: str = Field(..., title="Id")
     jurisdiction: str | None = Field(None, title="Jurisdiction")
+    kind: str = Field("consolidated", title="Kind")
     last_updated: str | None = Field(None, title="Last Updated")
     law_type: str = Field(..., title="Law Type")
     publication_date: str | None = Field(None, title="Publication Date")
@@ -107,6 +108,7 @@ class LawDetail(BaseModel):
     text_state: str = Field("point_in_time", title="Text State")
     text_superseded: bool | None = Field(None, title="Text Superseded")
     title: str = Field(..., title="Title")
+    warning: str | None = Field(None, title="Warning")
 
 
 class LawMeta(BaseModel):

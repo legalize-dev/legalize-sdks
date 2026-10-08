@@ -454,6 +454,11 @@
             ],
             "title": "Jurisdiction"
           },
+          "kind": {
+            "default": "consolidated",
+            "title": "Kind",
+            "type": "string"
+          },
           "last_updated": {
             "anyOf": [
               {
@@ -543,6 +548,18 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Warning"
           }
         },
         "required": [
@@ -2199,7 +2216,7 @@
     },
     "/api/v1/{country}/laws/{law_id}": {
       "get": {
-        "description": "Get a complete law with full Markdown content.\n\nFetches content from GitHub. Slower than /meta for metadata-only use cases.\nFree tier: basic fields + content_md.\nPro tier: adds department, source, last_updated, extra (country-specific metadata).",
+        "description": "Get a complete law with full Markdown content.\n\nFetches content from GitHub. Slower than /meta for metadata-only use cases.\nFree tier: basic fields + content_md.\nPro tier: adds department, source, last_updated, extra (country-specific metadata).\nRead `kind` and `warning` before quoting: `incomplete` identifies a source\nintegrity warning, independently of the body's `text_state`.",
         "operationId": "api_get_law_api_v1__country__laws__law_id__get",
         "parameters": [
           {
