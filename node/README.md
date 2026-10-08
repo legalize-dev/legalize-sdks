@@ -72,7 +72,10 @@ const at = await client.laws.atDate("es", "ley_organica_3_2018", "2019-05-13");
 console.log(at.sha, at.version_date); // which version answered, so you can cite it
 ```
 
-The rule is *published on or before* the date, not *in force on* it.
+Resolution uses the source's publication date where known, or the version's
+explicit cutoff when no publication date is recorded. Selection does not
+establish entry into force. Read `text_state` and `warning`: a `current`
+snapshot does not establish historical wording.
 
 ### XML (and other raw formats)
 

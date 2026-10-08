@@ -147,7 +147,7 @@ func (s *LawsService) Commits(ctx context.Context, country, lawID string) (*Comm
 }
 
 // AtCommit returns the law's full text at a specific historical
-// version (time travel).
+// version. Read TextState and Warning before quoting the body.
 func (s *LawsService) AtCommit(ctx context.Context, country, lawID, sha string) (*LawAtCommitResponse, error) {
 	var out LawAtCommitResponse
 	if err := s.client.requestJSON(ctx, http.MethodGet, API+"/"+country+"/laws/"+lawID+"/at/"+sha, nil, &out); err != nil {
@@ -156,14 +156,17 @@ func (s *LawsService) AtCommit(ctx context.Context, country, lawID, sha string) 
 	return &out, nil
 }
 
-// AtDate returns the law's full text as published on or before date
+// AtDate returns the latest recorded version dated on or before date
 // (YYYY-MM-DD). The server resolves the date to a version, so callers need not
 // walk Commits looking for a SHA; the resolved SHA and VersionDate come back
 // with the text so the answer stays verifiable.
 //
-// The rule is "published on or before" date, not "in force on" it: the dates
-// are official publication dates, so a reform still inside its vacatio legis
-// resolves as already applying. Cite accordingly.
+// Resolution uses the source's publication date where known, or the version's
+// explicit cutoff when no publication date is recorded. Selection does not
+// establish entry into force: a published reform may still be within its
+// vacatio legis. Cite accordingly.
+// Read TextState and Warning: a current-only snapshot does not establish
+// historical wording, even when attached to a dated legislative event.
 func (s *LawsService) AtDate(ctx context.Context, country, lawID, date string) (*LawAtDateResponse, error) {
 	var out LawAtDateResponse
 	if err := s.client.requestJSON(ctx, http.MethodGet, API+"/"+country+"/laws/"+lawID+"/at",

@@ -291,6 +291,43 @@ describe("laws.searchIter", () => {
 });
 
 describe("laws.retrieve / meta / commits / atCommit / atDate", () => {
+  it.each(["current", "as_enacted", "point_in_time", "future_state"])(
+    "preserves typed historical metadata for %s",
+    async (state) => {
+      const expected = {
+        law_id: "IE-1995-act-2",
+        sha: "abcdef1",
+        content_md: "Complete law text.",
+        date: "2023-07-03",
+        version_date: "2023-07-03",
+        citation: "Source snapshot; read its coverage warning.",
+        citation_url: "https://example.test/citation",
+        kind: state === "point_in_time" ? "consolidated" : state,
+        text_state: state,
+        status: "partially_repealed",
+        in_force: null,
+        source_url: "https://example.test/official-version",
+        basis: state === "current" ? "current_snapshot" : "recorded_on_or_before",
+        text_superseded: state === "current" ? null : state === "as_enacted",
+        warning: "This snapshot does not establish historical wording.",
+        amended_by: [{ source_id: "IE-2021-act-4", date: "2021-03-27" }],
+        source_notes: [{ type: null, text: "Source's note", refs: [] }],
+      };
+      const { client } = buildClient(expected);
+      const atDate = await client.laws.atDate("ie", expected.law_id, expected.date);
+      const atCommit = await client.laws.atCommit("ie", expected.law_id, expected.sha);
+      for (const out of [atDate, atCommit]) {
+        expect(out).toEqual(expected);
+        expect(out.kind).toBe(expected.kind);
+        expect(out.text_state).toBe(state);
+        expect(out.warning).toBe(expected.warning);
+        expect(out.status).toBe(expected.status);
+        expect(out.source_url).toBe(expected.source_url);
+        expect(out.in_force).toBeNull();
+        expect(out.text_superseded).toBe(expected.text_superseded);
+      }
+    },
+  );
   it("retrieve", async () => {
     const { client, calls } = buildClient({ ...LAW_META, content_md: "# body" });
     const out = await client.laws.retrieve("es", "ley_organica_3_2018");

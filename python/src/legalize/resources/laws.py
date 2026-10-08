@@ -247,20 +247,25 @@ class Laws(_SyncResource):
         return CommitsResponse.model_validate(data)
 
     def at_commit(self, country: str, law_id: str, sha: str) -> LawAtCommitResponse:
-        """Return the law's full text at a specific historical version."""
+        """Return one revision; read its ``text_state`` and ``warning`` before quoting."""
         data = self._client.request("GET", f"{API}/{country}/laws/{law_id}/at/{sha}")
         return LawAtCommitResponse.model_validate(data)
 
     def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
-        """Return the law's full text as published on or before ``date``.
+        """Return the latest recorded version dated on or before ``date``.
 
         The server resolves the date to a version, so callers do not have to
         walk :meth:`commits` looking for a SHA. The response carries the
         resolved ``sha`` and ``version_date`` so the answer stays verifiable.
 
-        The rule is *published on or before* ``date``, not *in force on* it:
-        the dates are official publication dates, so a reform still inside its
-        vacatio legis resolves as already applying. Cite accordingly.
+        Resolution uses the source's publication date where known, or the
+        version's explicit cutoff when no publication date is recorded.
+        Selection does not establish entry into force: a published reform
+        may still be within its vacatio legis. Cite accordingly.
+
+        Read ``text_state`` and ``warning`` before quoting. A ``current``
+        snapshot does not establish historical wording; metadata describes
+        this revision, which may have different coverage from the latest one.
 
         Args:
             country: Country code, e.g. ``"es"``.
@@ -427,7 +432,7 @@ class AsyncLaws(_AsyncResource):
         return LawAtCommitResponse.model_validate(data)
 
     async def at_date(self, country: str, law_id: str, date: str) -> LawAtDateResponse:
-        """Return the law's full text as published on or before ``date``.
+        """Return the latest recorded version dated on or before ``date``.
 
         Async twin of :meth:`Laws.at_date`.
         """

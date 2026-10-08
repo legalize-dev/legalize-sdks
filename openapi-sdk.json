@@ -102,8 +102,44 @@
       },
       "LawAtCommitResponse": {
         "properties": {
+          "amended_by": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Amended By",
+            "type": "array"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
           "content_md": {
             "title": "Content Md",
+            "type": "string"
+          },
+          "in_force": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Force"
+          },
+          "kind": {
+            "default": "consolidated",
+            "title": "Kind",
             "type": "string"
           },
           "law_id": {
@@ -113,6 +149,64 @@
           "sha": {
             "title": "Sha",
             "type": "string"
+          },
+          "source_notes": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Source Notes",
+            "type": "array"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "text_state": {
+            "default": "point_in_time",
+            "title": "Text State",
+            "type": "string"
+          },
+          "text_superseded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Superseded"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
           }
         },
         "required": [
@@ -124,8 +218,28 @@
         "type": "object"
       },
       "LawAtDateResponse": {
-        "description": "A law as it stood on a date, plus what that answer actually resolved to.\n\n``sha`` and ``version_date`` are returned so the caller can verify the\nanswer and cite the exact version, rather than trusting the date they\nasked for.\n\n``citation`` is that same answer as one line to paste into a filing, in the\nlanguage of the jurisdiction, and ``citation_url`` is the public page the\nother side can open to check it.",
+        "description": "A law as it stood on a date, plus what that answer actually resolved to.\n\n``sha`` and ``version_date`` are returned so the caller can verify the\nanswer and cite the exact version, rather than trusting the date they\nasked for.\n\n``citation`` is that same answer as one line to paste into a filing, in the\nlanguage of the jurisdiction, and ``citation_url`` is the public page the\nother side can open to check it. Pass that URL on whole: its ``k`` is what\nlets it be opened from outside the site, and without it the page answers\nwith the law in force instead of the version cited.",
         "properties": {
+          "amended_by": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Amended By",
+            "type": "array"
+          },
+          "basis": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis"
+          },
           "citation": {
             "title": "Citation",
             "type": "string"
@@ -140,6 +254,22 @@
           },
           "date": {
             "title": "Date",
+            "type": "string"
+          },
+          "in_force": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Force"
+          },
+          "kind": {
+            "default": "consolidated",
+            "title": "Kind",
             "type": "string"
           },
           "law_id": {
@@ -157,6 +287,53 @@
             ],
             "title": "Sha"
           },
+          "source_notes": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Source Notes",
+            "type": "array"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "text_state": {
+            "default": "point_in_time",
+            "title": "Text State",
+            "type": "string"
+          },
+          "text_superseded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Superseded"
+          },
           "version_date": {
             "anyOf": [
               {
@@ -167,6 +344,17 @@
               }
             ],
             "title": "Version Date"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
           }
         },
         "required": [
@@ -2084,7 +2272,7 @@
     },
     "/api/v1/{country}/laws/{law_id}/at": {
       "get": {
-        "description": "Time-travel by date: the text of a law as published on or before `date`.\n\nResolves the date to a version server-side, so callers do not have to walk\n`/commits` looking for a SHA. The resolved `sha` and `version_date` come\nback with the text so the answer stays verifiable.\n\nThe rule is **published on or before** the date, not \"in force on\" it: the\ndates are official publication dates, so a reform still within its vacatio\nlegis resolves as already applying. Cite accordingly \u2014 `citation` says so in\nwords, and `citation_url` is the page that backs it up.",
+        "description": "Get the latest recorded version of a law dated on or before `date`.\n\nResolves the date to a version server-side, so callers do not have to walk\n`/commits` looking for a SHA. The resolved `sha` and `version_date` come\nback with the text so the answer stays verifiable.\n\nResolution uses the source's publication date where known, or the version's\nexplicit cutoff when no publication date is recorded. Selection does not\nestablish entry into force: a published reform may still be within its\nvacatio legis. Check `version_date` and the source before citing;\n`citation_url` opens the selected version.\n\n**Read `text_state` and `kind` before quoting the body.** `consolidated`\nidentifies a dated consolidation. `current` is the source's latest text\nand cannot establish what the law said on a historical date. `as_enacted`\nmeans this revision holds the act as it was passed: if\n`text_superseded` is true, what you are reading is *not* the version in\nforce on the date you asked for, `warning` says so in a sentence you can\nshow a human, and `amended_by` names the norms that changed it.",
         "operationId": "api_law_at_date_api_v1__country__laws__law_id__at_get",
         "parameters": [
           {
@@ -2168,7 +2356,7 @@
     },
     "/api/v1/{country}/laws/{law_id}/at/{sha}": {
       "get": {
-        "description": "Time-travel: get the full text of a law at a specific historical version.",
+        "description": "Get the full text of a law at a specific recorded version.\n\nSame discriminator as `/at`: check `text_state`, `kind` and `warning`\nbefore quoting. They describe this SHA, even if a later revision has\ndifferent source coverage or legal status. A version's date comes from the\nsource's publication date where known, or its explicit cutoff when no\npublication date is recorded. Neither establishes entry into force, and a\n`current` snapshot does not establish historical wording.",
         "operationId": "api_law_at_commit_api_v1__country__laws__law_id__at__sha__get",
         "parameters": [
           {

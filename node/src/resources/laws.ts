@@ -184,15 +184,19 @@ export class Laws {
   }
 
   /**
-   * Return the law's full text as published on or before `date`.
+   * Return the latest recorded version dated on or before `date`.
    *
    * The server resolves the date to a version, so callers need not walk
    * {@link commits} looking for a SHA. The response carries the resolved
-   * `sha` and `versionDate` so the answer stays verifiable.
+   * `sha` and `version_date` so the answer stays verifiable.
    *
-   * The rule is *published on or before* `date`, not *in force on* it: the
-   * dates are official publication dates, so a reform still inside its
-   * vacatio legis resolves as already applying. Cite accordingly.
+   * Resolution uses the source's publication date where known, or the
+   * version's explicit cutoff when no publication date is recorded.
+   * Selection does not establish entry into force: a published reform
+   * may still be within its vacatio legis. Cite accordingly.
+   *
+   * Read `text_state` and `warning` before quoting. A `current` snapshot
+   * does not establish historical wording, even when attached to a dated event.
    *
    * @param date - Point in time as `YYYY-MM-DD`.
    */

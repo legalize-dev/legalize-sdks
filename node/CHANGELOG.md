@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+### Added
+
+- Historical response types expose source coverage, status, source URL,
+  warnings, amendment references and source notes. `kind` accepts `current`
+  and future string values; nullable flags remain distinct from false.
+  Existing method signatures and responses without these fields remain supported.
+
+### Changed
+
+- Historical retrieval documentation distinguishes known publication dates from
+  explicit version cutoffs. `basis: recorded_on_or_before` does not claim entry
+  into force; `current_snapshot` does not establish historical wording.
+
 ## [0.3.0] — 2026-08-21
 
 ### Added
