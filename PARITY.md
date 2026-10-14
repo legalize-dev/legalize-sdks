@@ -134,10 +134,12 @@ value scopes `stats.retrieve`.
 
   `at` is one operation with two addresses: a SHA names a version exactly, a
   date is resolved to one server-side. The response carries the resolved `sha`
-  and `version_date` so the answer stays verifiable. The rule is **published on
-  or before** the date, not *in force on* it — the dates are official
-  publication dates, so a reform inside its vacatio legis resolves as already
-  applying. Where the language has nullable types (Go `*string`), `sha` and
+  and `version_date` so the answer stays verifiable. Resolution uses the
+  source's publication date where known, or the version's explicit cutoff when
+  no publication date is recorded. Selection does not establish entry into
+  force: a published reform may still be within its vacatio legis. A `current`
+  snapshot does not establish historical wording; read `text_state` and
+  `warning` before quoting. Where the language has nullable types (Go `*string`), `sha` and
   `version_date` are nullable: a date before the law existed is a valid answer
   with no version behind it.
 
@@ -190,7 +192,7 @@ carry both on `LawSummary`, `LawSearchResult`, `LawMeta` and `LawDetail`.
 | value | the body is | quotable as the law in force |
 |---|---|---|
 | `point_in_time` | the law as in force on its date | yes |
-| `current` | the latest text the source publishes | yes |
+| `current` | the latest text the source publishes | current source text only; does not establish wording on a historical date |
 | `as_enacted` | the act as published, amendments not folded in | only if nothing amended it |
 
 Absent means `point_in_time`, not unknown: the corpus only emits the field when
@@ -216,6 +218,25 @@ times. The server resolves it; the field is the answer, and `reform_count` is
 the count for *that* record only.
 
 ### Response types
+
+Historical responses (`LawAtCommitResponse` and `LawAtDateResponse`) MUST
+preserve `kind`, `text_state`, `status`, `in_force`, `source_url`, `basis`,
+`text_superseded`, `warning`, `amended_by` and `source_notes`. These describe the
+returned revision, not the latest catalogue record. One law may have an
+`as_enacted` original, dated `point_in_time` revisions and a `current` snapshot.
+Read `text_state` and `warning` before quoting the body: `kind: current` does
+not establish historical wording, even when a request specifies a date or SHA.
+`basis: recorded_on_or_before` resolves a known publication date or explicit
+version cutoff; it does not claim entry into force. `current_snapshot` identifies
+current-only coverage. Treat basis values as open strings for compatibility.
+
+A known source omission is `kind: incomplete` with an explicit `warning`;
+`text_state` still describes its temporal coverage. Existing temporal warnings
+remain present. `LawDetail` also preserves `kind` and `warning` on latest reads.
+
+The fields are additive and may be absent in older server responses. Preserve
+null booleans as unknown, distinct from false. Keep `kind` and `text_state` as
+open strings so a future source state does not make deserialization fail.
 
 All typed responses match the schemas in
 [`openapi-sdk.json`](openapi-sdk.json). Generated models live in

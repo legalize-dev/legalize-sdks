@@ -78,7 +78,10 @@ at = client.laws.at_date(country="es", law_id="ley_organica_3_2018", date="2019-
 print(at.sha, at.version_date)  # which version answered, so you can cite it
 ```
 
-The rule is *published on or before* the date, not *in force on* it.
+Resolution uses the source's publication date where known, or the version's
+explicit cutoff when no publication date is recorded. Selection does not
+establish entry into force. Read `text_state` and `warning`: a `current`
+snapshot does not establish historical wording.
 
 ### XML (and other raw formats)
 

@@ -242,6 +242,8 @@ export interface paths {
          *     Fetches content from GitHub. Slower than /meta for metadata-only use cases.
          *     Free tier: basic fields + content_md.
          *     Pro tier: adds department, source, last_updated, extra (country-specific metadata).
+         *     Read `kind` and `warning` before quoting: `incomplete` identifies a source
+         *     integrity warning, independently of the body's `text_state`.
          */
         get: operations["api_get_law_api_v1__country__laws__law_id__get"];
         put?: never;
@@ -261,16 +263,25 @@ export interface paths {
         };
         /**
          * Api Law At Date
-         * @description Time-travel by date: the text of a law as published on or before `date`.
+         * @description Get the latest recorded version of a law dated on or before `date`.
          *
          *     Resolves the date to a version server-side, so callers do not have to walk
          *     `/commits` looking for a SHA. The resolved `sha` and `version_date` come
          *     back with the text so the answer stays verifiable.
          *
-         *     The rule is **published on or before** the date, not "in force on" it: the
-         *     dates are official publication dates, so a reform still within its vacatio
-         *     legis resolves as already applying. Cite accordingly — `citation` says so in
-         *     words, and `citation_url` is the page that backs it up.
+         *     Resolution uses the source's publication date where known, or the version's
+         *     explicit cutoff when no publication date is recorded. Selection does not
+         *     establish entry into force: a published reform may still be within its
+         *     vacatio legis. Check `version_date` and the source before citing;
+         *     `citation_url` opens the selected version.
+         *
+         *     **Read `text_state` and `kind` before quoting the body.** `consolidated`
+         *     identifies a dated consolidation. `current` is the source's latest text
+         *     and cannot establish what the law said on a historical date. `as_enacted`
+         *     means this revision holds the act as it was passed: if
+         *     `text_superseded` is true, what you are reading is *not* the version in
+         *     force on the date you asked for, `warning` says so in a sentence you can
+         *     show a human, and `amended_by` names the norms that changed it.
          */
         get: operations["api_law_at_date_api_v1__country__laws__law_id__at_get"];
         put?: never;
@@ -290,7 +301,14 @@ export interface paths {
         };
         /**
          * Api Law At Commit
-         * @description Time-travel: get the full text of a law at a specific historical version.
+         * @description Get the full text of a law at a specific recorded version.
+         *
+         *     Same discriminator as `/at`: check `text_state`, `kind` and `warning`
+         *     before quoting. They describe this SHA, even if a later revision has
+         *     different source coverage or legal status. A version's date comes from the
+         *     source's publication date where known, or its explicit cutoff when no
+         *     publication date is recorded. Neither establishes entry into force, and a
+         *     `current` snapshot does not establish historical wording.
          */
         get: operations["api_law_at_commit_api_v1__country__laws__law_id__at__sha__get"];
         put?: never;
@@ -425,12 +443,48 @@ export interface components {
         };
         /** LawAtCommitResponse */
         LawAtCommitResponse: {
+            /**
+             * Amended By
+             * @default []
+             */
+            amended_by: {
+                [key: string]: unknown;
+            }[];
+            /** Basis */
+            basis?: string | null;
             /** Content Md */
             content_md: string;
+            /** In Force */
+            in_force?: boolean | null;
+            /**
+             * Kind
+             * @default consolidated
+             */
+            kind: string;
             /** Law Id */
             law_id: string;
             /** Sha */
             sha: string;
+            /**
+             * Source Notes
+             * @default []
+             */
+            source_notes: {
+                [key: string]: unknown;
+            }[];
+            /** Source Url */
+            source_url?: string | null;
+            /** Status */
+            status?: string | null;
+            /**
+             * Text State
+             * @default point_in_time
+             */
+            text_state: string;
+            /** Text Superseded */
+            text_superseded?: boolean | null;
+            /** Warning */
+            warning?: string | null;
         };
         /**
          * LawAtDateResponse
@@ -442,9 +496,20 @@ export interface components {
          *
          *     ``citation`` is that same answer as one line to paste into a filing, in the
          *     language of the jurisdiction, and ``citation_url`` is the public page the
-         *     other side can open to check it.
+         *     other side can open to check it. Pass that URL on whole: its ``k`` is what
+         *     lets it be opened from outside the site, and without it the page answers
+         *     with the law in force instead of the version cited.
          */
         LawAtDateResponse: {
+            /**
+             * Amended By
+             * @default []
+             */
+            amended_by: {
+                [key: string]: unknown;
+            }[];
+            /** Basis */
+            basis?: string | null;
             /** Citation */
             citation: string;
             /** Citation Url */
@@ -453,12 +518,39 @@ export interface components {
             content_md: string;
             /** Date */
             date: string;
+            /** In Force */
+            in_force?: boolean | null;
+            /**
+             * Kind
+             * @default consolidated
+             */
+            kind: string;
             /** Law Id */
             law_id: string;
             /** Sha */
             sha: string | null;
+            /**
+             * Source Notes
+             * @default []
+             */
+            source_notes: {
+                [key: string]: unknown;
+            }[];
+            /** Source Url */
+            source_url?: string | null;
+            /** Status */
+            status?: string | null;
+            /**
+             * Text State
+             * @default point_in_time
+             */
+            text_state: string;
+            /** Text Superseded */
+            text_superseded?: boolean | null;
             /** Version Date */
             version_date: string | null;
+            /** Warning */
+            warning?: string | null;
         };
         /**
          * LawDetail
@@ -496,6 +588,11 @@ export interface components {
             id: string;
             /** Jurisdiction */
             jurisdiction?: string | null;
+            /**
+             * Kind
+             * @default consolidated
+             */
+            kind: string;
             /** Last Updated */
             last_updated?: string | null;
             /** Law Type */
@@ -519,6 +616,11 @@ export interface components {
             text_superseded?: boolean | null;
             /** Title */
             title: string;
+            /**
+             * Warning
+             * @default null
+             */
+            warning: string | null;
         };
         /**
          * LawMeta

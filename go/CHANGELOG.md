@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- `LawDetail` retains `kind` and `warning`, including source completeness
+  warnings on the latest response. Historical models already accept `incomplete`.
+
+- Historical response structs retain source coverage, status, source URL,
+  warnings, amendment references and source notes. `Kind` accepts `current`
+  and future string values; nullable flags remain distinct from false.
+  Existing method signatures and responses without these fields remain supported.
+
+### Changed
+
+- Historical retrieval documentation distinguishes known publication dates from
+  explicit version cutoffs. `basis: recorded_on_or_before` does not claim entry
+  into force; `current_snapshot` does not establish historical wording.
+
 ## [0.3.0] — 2026-08-21
 
 ### Added

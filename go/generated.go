@@ -34,9 +34,19 @@ type JurisdictionInfo struct {
 
 // LawAtCommitResponse is the return payload of laws.at_commit.
 type LawAtCommitResponse struct {
-	LawID     string `json:"law_id"`
-	SHA       string `json:"sha"`
-	ContentMD string `json:"content_md"`
+	LawID          string           `json:"law_id"`
+	SHA            string           `json:"sha"`
+	ContentMD      string           `json:"content_md"`
+	Kind           string           `json:"kind"`
+	TextState      string           `json:"text_state"`
+	Status         *string          `json:"status"`
+	InForce        *bool            `json:"in_force"`
+	SourceURL      *string          `json:"source_url"`
+	Basis          *string          `json:"basis"`
+	TextSuperseded *bool            `json:"text_superseded"`
+	Warning        *string          `json:"warning"`
+	AmendedBy      []map[string]any `json:"amended_by"`
+	SourceNotes    []map[string]any `json:"source_notes"`
 }
 
 // LawAtDateResponse is the return payload of laws.at_date: a law as it stood
@@ -46,13 +56,23 @@ type LawAtCommitResponse struct {
 // valid answer with no version behind it — nil there means "nothing had been
 // published yet", which is not the same as an empty text.
 type LawAtDateResponse struct {
-	LawID       string  `json:"law_id"`
-	Date        string  `json:"date"`
-	SHA         *string `json:"sha"`
-	VersionDate *string `json:"version_date"`
-	Citation    string  `json:"citation"`
-	CitationURL string  `json:"citation_url"`
-	ContentMD   string  `json:"content_md"`
+	LawID          string           `json:"law_id"`
+	Date           string           `json:"date"`
+	SHA            *string          `json:"sha"`
+	VersionDate    *string          `json:"version_date"`
+	Citation       string           `json:"citation"`
+	CitationURL    string           `json:"citation_url"`
+	ContentMD      string           `json:"content_md"`
+	Kind           string           `json:"kind"`
+	TextState      string           `json:"text_state"`
+	Status         *string          `json:"status"`
+	InForce        *bool            `json:"in_force"`
+	SourceURL      *string          `json:"source_url"`
+	Basis          *string          `json:"basis"`
+	TextSuperseded *bool            `json:"text_superseded"`
+	Warning        *string          `json:"warning"`
+	AmendedBy      []map[string]any `json:"amended_by"`
+	SourceNotes    []map[string]any `json:"source_notes"`
 }
 
 // TextState values (Legalize Format Spec v0.3): what the body of a law
@@ -109,6 +129,8 @@ type LawDetail struct {
 	LastUpdated     *string        `json:"last_updated,omitempty"`
 	Extra           map[string]any `json:"extra,omitempty"`
 	Frontmatter     map[string]any `json:"frontmatter,omitempty"`
+	Kind            string         `json:"kind"`
+	Warning         *string        `json:"warning"`
 }
 
 // LawMeta is law metadata without content — fast, no GitHub fetch.

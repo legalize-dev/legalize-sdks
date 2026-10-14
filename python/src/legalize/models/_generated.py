@@ -30,9 +30,19 @@ class JurisdictionInfo(BaseModel):
 
 
 class LawAtCommitResponse(BaseModel):
+    amended_by: list[dict[str, Any]] = Field([], title="Amended By")
+    basis: str | None = Field(None, title="Basis")
     content_md: str = Field(..., title="Content Md")
+    in_force: bool | None = Field(None, title="In Force")
+    kind: str = Field("consolidated", title="Kind")
     law_id: str = Field(..., title="Law Id")
     sha: str = Field(..., title="Sha")
+    source_notes: list[dict[str, Any]] = Field([], title="Source Notes")
+    source_url: str | None = Field(None, title="Source Url")
+    status: str | None = Field(None, title="Status")
+    text_state: str = Field("point_in_time", title="Text State")
+    text_superseded: bool | None = Field(None, title="Text Superseded")
+    warning: str | None = Field(None, title="Warning")
 
 
 class LawAtDateResponse(BaseModel):
@@ -45,16 +55,28 @@ class LawAtDateResponse(BaseModel):
 
     ``citation`` is that same answer as one line to paste into a filing, in the
     language of the jurisdiction, and ``citation_url`` is the public page the
-    other side can open to check it.
+    other side can open to check it. Pass that URL on whole: its ``k`` is what
+    lets it be opened from outside the site, and without it the page answers
+    with the law in force instead of the version cited.
     """
 
+    amended_by: list[dict[str, Any]] = Field([], title="Amended By")
+    basis: str | None = Field(None, title="Basis")
     citation: str = Field(..., title="Citation")
     citation_url: str = Field(..., title="Citation Url")
     content_md: str = Field(..., title="Content Md")
     date: str = Field(..., title="Date")
+    in_force: bool | None = Field(None, title="In Force")
+    kind: str = Field("consolidated", title="Kind")
     law_id: str = Field(..., title="Law Id")
     sha: str | None = Field(..., title="Sha")
+    source_notes: list[dict[str, Any]] = Field([], title="Source Notes")
+    source_url: str | None = Field(None, title="Source Url")
+    status: str | None = Field(None, title="Status")
+    text_state: str = Field("point_in_time", title="Text State")
+    text_superseded: bool | None = Field(None, title="Text Superseded")
     version_date: str | None = Field(..., title="Version Date")
+    warning: str | None = Field(None, title="Warning")
 
 
 class LawDetail(BaseModel):
@@ -75,6 +97,7 @@ class LawDetail(BaseModel):
     frontmatter: dict[str, Any] | None = Field(None, title="Frontmatter")
     id: str = Field(..., title="Id")
     jurisdiction: str | None = Field(None, title="Jurisdiction")
+    kind: str = Field("consolidated", title="Kind")
     last_updated: str | None = Field(None, title="Last Updated")
     law_type: str = Field(..., title="Law Type")
     publication_date: str | None = Field(None, title="Publication Date")
@@ -85,6 +108,7 @@ class LawDetail(BaseModel):
     text_state: str = Field("point_in_time", title="Text State")
     text_superseded: bool | None = Field(None, title="Text Superseded")
     title: str = Field(..., title="Title")
+    warning: str | None = Field(None, title="Warning")
 
 
 class LawMeta(BaseModel):

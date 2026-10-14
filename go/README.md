@@ -100,8 +100,11 @@ at, _ := client.Laws().AtDate(ctx, "es", "ley_organica_3_2018", "2019-05-13")
 fmt.Println(*at.SHA, *at.VersionDate) // which version answered, so you can cite it
 ```
 
-`SHA` and `VersionDate` are nil when nothing had been published by that date.
-The rule is *published on or before* the date, not *in force on* it.
+`SHA` and `VersionDate` are nullable when no version is recorded by that date.
+Resolution uses the source's publication date where known, or the version's
+explicit cutoff when no publication date is recorded. Selection does not
+establish entry into force. Read `TextState` and `Warning`: a `current`
+snapshot does not establish historical wording.
 
 ### XML (and other raw formats)
 
