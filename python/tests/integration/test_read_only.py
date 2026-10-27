@@ -247,10 +247,14 @@ class TestLawHistory:
     def test_at_date_before_the_law_existed_has_no_version(
         self, client: Legalize, reformed_law: str
     ):
-        """Not an error: a valid answer with nothing behind it."""
-        at = client.laws.at_date("es", reformed_law, "1500-01-01")
-        assert at.sha is None
-        assert at.content_md == ""
+        """A 404 that names the date the history does start at.
+
+        It used to be a 200 with an empty body, which a caller could read as
+        "the law said nothing then"; the API answers 404 `before_history` now.
+        """
+        with pytest.raises(NotFoundError) as caught:
+            client.laws.at_date("es", reformed_law, "1500-01-01")
+        assert caught.value.code == "before_history"
 
     def test_at_date_rejects_a_malformed_date(self, client: Legalize, reformed_law: str):
         with pytest.raises(InvalidRequestError):

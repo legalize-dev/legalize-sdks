@@ -4,6 +4,12 @@ name: integration-alert
 # as a red mark nobody opens. They failed daily from 2026-08-11 to 2026-08-21
 # with a dead LEGALIZE_API_KEY and went unnoticed for three months. This turns
 # that silence into an issue.
+#
+# One issue was not enough either: #40 opened on 2026-08-27 and stayed open,
+# unread, for two months of daily failures, because an open issue is the only
+# signal and nobody is notified of an issue a bot opens. So the issue is
+# assigned to the owner and mentions them, and while it stays open a failure
+# comments again once a week, which notifies by email again.
 
 on:
   workflow_run:
@@ -24,6 +30,7 @@ jobs:
           REPO: ${{ github.repository }}
           WORKFLOW: ${{ github.event.workflow_run.name }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          OWNER: EnriqueLop
         run: |
           set -euo pipefail
           gh label create integration-failure --repo "$REPO" \
@@ -31,14 +38,22 @@ jobs:
             2>/dev/null || true
           open=$(gh issue list --repo "$REPO" --state open \
             --label integration-failure --limit 1 --json number --jq '.[0].number // empty')
-          # ponytail: one open issue is the whole signal — no daily "still broken" comments
           if [ -n "$open" ]; then
-            echo "Issue #$open already open, saying nothing."
+            # ponytail: a weekly reminder, not a daily one; the clock is the
+            # issue's last activity, which the reminder itself resets.
+            updated=$(gh issue view "$open" --repo "$REPO" --json updatedAt --jq .updatedAt)
+            if [ "$(date -d "$updated" +%s)" -gt "$(date -d '7 days ago' +%s)" ]; then
+              echo "Issue #$open active within the week, saying nothing."
+              exit 0
+            fi
+            gh issue edit "$open" --repo "$REPO" --add-assignee "$OWNER"
+            gh issue comment "$open" --repo "$REPO" \
+              --body "@$OWNER still failing: \`$WORKFLOW\` $RUN_URL"
             exit 0
           fi
-          gh issue create --repo "$REPO" --label integration-failure \
+          gh issue create --repo "$REPO" --label integration-failure --assignee "$OWNER" \
             --title "Integration tests against prod are failing" \
-            --body "\`$WORKFLOW\` failed: $RUN_URL
+            --body "@$OWNER \`$WORKFLOW\` failed: $RUN_URL
 
           The live SDK suites hit https://legalize.dev with \`LEGALIZE_API_KEY\`.
           A 401 \`invalid_api_key\` means that secret is dead — rotate the key and
