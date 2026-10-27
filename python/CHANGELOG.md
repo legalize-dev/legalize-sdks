@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `articles_indexed` is `bool | None` on `LawDetail`, `LawMeta` and
+  `LawSearchResult`. The API returns `null` when it has not read the served
+  body, so list and search responses failed validation against the strict
+  `bool` the previous models declared.
+- The models are regenerated from the current API schema, which adds optional
+  fields to existing models. Four operations without a binding yet are left
+  out of the SDK schema until they are bound (#48).
+
 ### Added
 
 - `LawDetail` retains `kind` and `warning`, including source completeness

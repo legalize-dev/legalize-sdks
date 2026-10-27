@@ -97,7 +97,7 @@ export interface paths {
         head?: never;
         /**
          * Update Endpoint
-         * @description Update a webhook endpoint.
+         * @description Update a webhook endpoint. Disabling one needs no plan; anything else does.
          */
         patch: operations["update_endpoint_api_v1_webhooks__endpoint_id__patch"];
         trace?: never;
@@ -406,6 +406,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ArticleCoverage
+         * @description How much of a corpus is broken down into articles.
+         *
+         *     ``article_count: 0`` on a law is ambiguous — it can mean the law has no
+         *     articles, or that nobody ever broke it down — and a caller only finds out
+         *     the hard way, by asking for one article and getting the whole document.
+         *     This is the same question asked of a whole corpus, before that happens.
+         */
+        ArticleCoverage: {
+            /** Articles Total */
+            articles_total: number;
+            /** Laws Total */
+            laws_total: number;
+            /** Laws With Articles */
+            laws_with_articles: number;
+        };
         /** Commit */
         Commit: {
             /** Date */
@@ -559,17 +576,8 @@ export interface components {
         LawDetail: {
             /** Article Count */
             article_count?: number | null;
-            /**
-             * Articles Indexed
-             * @description Whether *we* broke this law into articles — not whether it has any.
-             *
-             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
-             *     most of the corpora where it appears that is false: the articles are in
-             *     the text and we did not index them. Callers asking for an article, or
-             *     grepping one, need to tell "no such article" from "no index here", so the
-             *     distinction is stated rather than left to be inferred from a zero.
-             */
-            readonly articles_indexed: boolean;
+            /** Articles Indexed */
+            readonly articles_indexed: boolean | null;
             /** Content Md */
             content_md?: string | null;
             /** Country */
@@ -616,11 +624,8 @@ export interface components {
             text_superseded?: boolean | null;
             /** Title */
             title: string;
-            /**
-             * Warning
-             * @default null
-             */
-            warning: string | null;
+            /** Warning */
+            warning?: string | null;
         };
         /**
          * LawMeta
@@ -631,15 +636,9 @@ export interface components {
             article_count?: number | null;
             /**
              * Articles Indexed
-             * @description Whether *we* broke this law into articles — not whether it has any.
-             *
-             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
-             *     most of the corpora where it appears that is false: the articles are in
-             *     the text and we did not index them. Callers asking for an article, or
-             *     grepping one, need to tell "no such article" from "no index here", so the
-             *     distinction is stated rather than left to be inferred from a zero.
+             * @description Metadata counts do not establish an index in the currently served body.
              */
-            readonly articles_indexed: boolean;
+            readonly articles_indexed: boolean | null;
             /** Country */
             country: string;
             /** Department */
@@ -685,15 +684,15 @@ export interface components {
             article_count?: number | null;
             /**
              * Articles Indexed
-             * @description Whether *we* broke this law into articles — not whether it has any.
-             *
-             *     A bare ``article_count: 0`` reads as "this law has no articles", and for
-             *     most of the corpora where it appears that is false: the articles are in
-             *     the text and we did not index them. Callers asking for an article, or
-             *     grepping one, need to tell "no such article" from "no index here", so the
-             *     distinction is stated rather than left to be inferred from a zero.
+             * @description Metadata counts do not establish an index in the currently served body.
              */
-            readonly articles_indexed: boolean;
+            readonly articles_indexed: boolean | null;
+            /**
+             * Content Availability
+             * @default unchecked
+             * @constant
+             */
+            content_availability: "unchecked";
             /** Country */
             country: string;
             /** Id */
@@ -702,6 +701,8 @@ export interface components {
             jurisdiction?: string | null;
             /** Law Type */
             law_type: string;
+            /** Match Basis */
+            match_basis?: ("identifier" | "text") | null;
             /** Publication Date */
             publication_date?: string | null;
             /** Reform Count */
@@ -760,6 +761,13 @@ export interface components {
             articles_affected?: string | null;
             /** Date */
             date: string;
+            /**
+             * Source Available
+             * @default false
+             */
+            source_available: boolean;
+            /** Source Country */
+            source_country?: string | null;
             /** Source Id */
             source_id?: string | null;
             /** Source Title */
@@ -767,6 +775,17 @@ export interface components {
         };
         /** ReformsResponse */
         ReformsResponse: {
+            /**
+             * Declared By Source
+             * @default []
+             */
+            declared_by_source: {
+                [key: string]: unknown;
+            }[];
+            /** History */
+            history?: {
+                [key: string]: unknown;
+            } | null;
             /** Law Id */
             law_id: string;
             /** Limit */
@@ -780,6 +799,7 @@ export interface components {
         };
         /** StatsResponse */
         StatsResponse: {
+            article_coverage?: components["schemas"]["ArticleCoverage"] | null;
             /** Country */
             country: string;
             /** Jurisdiction */
@@ -819,6 +839,10 @@ export interface components {
             description: string;
             /** Event Types */
             event_types: string[];
+            /** Law Ids */
+            law_ids?: string[] | null;
+            /** Match Query */
+            match_query?: string | null;
             /** Url */
             url: string;
         };
@@ -832,6 +856,10 @@ export interface components {
             enabled?: boolean | null;
             /** Event Types */
             event_types?: string[] | null;
+            /** Law Ids */
+            law_ids?: string[] | null;
+            /** Match Query */
+            match_query?: string | null;
             /** Url */
             url?: string | null;
         };
@@ -1376,7 +1404,7 @@ export interface operations {
                 law_type?: string | null;
                 /** @description Filter by publication year (4 digits) */
                 year?: number | null;
-                /** @description Filter by status: vigente, derogada */
+                /** @description Filter by status. The corpus writes `in_force` and `repealed`; the documented `vigente` and `derogada` are accepted as aliases of those two, which is what they had always claimed to be and were not. */
                 status?: string | null;
                 /** @description Filter by jurisdiction code, or 'national' for the laws that carry no jurisdiction at all (the national corpus). */
                 jurisdiction?: string | null;

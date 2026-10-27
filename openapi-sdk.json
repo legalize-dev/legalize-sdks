@@ -1,6 +1,30 @@
 {
   "components": {
     "schemas": {
+      "ArticleCoverage": {
+        "description": "How much of a corpus is broken down into articles.\n\n``article_count: 0`` on a law is ambiguous \u2014 it can mean the law has no\narticles, or that nobody ever broke it down \u2014 and a caller only finds out\nthe hard way, by asking for one article and getting the whole document.\nThis is the same question asked of a whole corpus, before that happens.",
+        "properties": {
+          "articles_total": {
+            "title": "Articles Total",
+            "type": "integer"
+          },
+          "laws_total": {
+            "title": "Laws Total",
+            "type": "integer"
+          },
+          "laws_with_articles": {
+            "title": "Laws With Articles",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "laws_with_articles",
+          "laws_total",
+          "articles_total"
+        ],
+        "title": "ArticleCoverage",
+        "type": "object"
+      },
       "Commit": {
         "properties": {
           "date": {
@@ -384,10 +408,16 @@
             "title": "Article Count"
           },
           "articles_indexed": {
-            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "readOnly": true,
-            "title": "Articles Indexed",
-            "type": "boolean"
+            "title": "Articles Indexed"
           },
           "content_md": {
             "anyOf": [
@@ -558,7 +588,6 @@
                 "type": "null"
               }
             ],
-            "default": null,
             "title": "Warning"
           }
         },
@@ -587,10 +616,17 @@
             "title": "Article Count"
           },
           "articles_indexed": {
-            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Metadata counts do not establish an index in the currently served body.",
             "readOnly": true,
-            "title": "Articles Indexed",
-            "type": "boolean"
+            "title": "Articles Indexed"
           },
           "country": {
             "title": "Country",
@@ -750,10 +786,23 @@
             "title": "Article Count"
           },
           "articles_indexed": {
-            "description": "Whether *we* broke this law into articles \u2014 not whether it has any.\n\nA bare ``article_count: 0`` reads as \"this law has no articles\", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell \"no such article\" from \"no index here\", so the\ndistinction is stated rather than left to be inferred from a zero.",
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Metadata counts do not establish an index in the currently served body.",
             "readOnly": true,
-            "title": "Articles Indexed",
-            "type": "boolean"
+            "title": "Articles Indexed"
+          },
+          "content_availability": {
+            "const": "unchecked",
+            "default": "unchecked",
+            "title": "Content Availability",
+            "type": "string"
           },
           "country": {
             "title": "Country",
@@ -777,6 +826,21 @@
           "law_type": {
             "title": "Law Type",
             "type": "string"
+          },
+          "match_basis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "identifier",
+                  "text"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Basis"
           },
           "publication_date": {
             "anyOf": [
@@ -984,6 +1048,22 @@
             "title": "Date",
             "type": "string"
           },
+          "source_available": {
+            "default": false,
+            "title": "Source Available",
+            "type": "boolean"
+          },
+          "source_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Country"
+          },
           "source_id": {
             "anyOf": [
               {
@@ -1015,6 +1095,27 @@
       },
       "ReformsResponse": {
         "properties": {
+          "declared_by_source": {
+            "default": [],
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Declared By Source",
+            "type": "array"
+          },
+          "history": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History"
+          },
           "law_id": {
             "title": "Law Id",
             "type": "string"
@@ -1051,6 +1152,16 @@
       },
       "StatsResponse": {
         "properties": {
+          "article_coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArticleCoverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "country": {
             "title": "Country",
             "type": "string"
@@ -1167,6 +1278,31 @@
             "title": "Event Types",
             "type": "array"
           },
+          "law_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Law Ids"
+          },
+          "match_query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Query"
+          },
           "url": {
             "title": "Url",
             "type": "string"
@@ -1231,6 +1367,31 @@
             ],
             "title": "Event Types"
           },
+          "law_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Law Ids"
+          },
+          "match_query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Query"
+          },
           "url": {
             "anyOf": [
               {
@@ -1249,7 +1410,7 @@
     },
     "securitySchemes": {
       "ApiKeyAuth": {
-        "description": "Bearer token. Get one for free at https://legalize.dev/api \u2014 no credit card, 5,000 calls/month forever for early signups. Format: `Bearer leg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`",
+        "description": "Bearer token. Get one for free at https://legalize.dev/api \u2014 no credit card, 2,000 calls/month on Free. Format: `Bearer leg_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`",
         "in": "header",
         "name": "Authorization",
         "type": "apiKey"
@@ -1538,7 +1699,7 @@
         ]
       },
       "patch": {
-        "description": "Update a webhook endpoint.",
+        "description": "Update a webhook endpoint. Disabling one needs no plan; anything else does.",
         "operationId": "update_endpoint_api_v1_webhooks__endpoint_id__patch",
         "parameters": [
           {
@@ -2039,7 +2200,7 @@
             }
           },
           {
-            "description": "Filter by status: vigente, derogada",
+            "description": "Filter by status. The corpus writes `in_force` and `repealed`; the documented `vigente` and `derogada` are accepted as aliases of those two, which is what they had always claimed to be and were not.",
             "in": "query",
             "name": "status",
             "required": false,
@@ -2052,7 +2213,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by status: vigente, derogada",
+              "description": "Filter by status. The corpus writes `in_force` and `repealed`; the documented `vigente` and `derogada` are accepted as aliases of those two, which is what they had always claimed to be and were not.",
               "title": "Status"
             }
           },

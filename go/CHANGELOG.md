@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `ArticlesIndexed` is `*bool` on `LawDetail`, `LawMeta` and
+  `LawSearchResult`. The API returns `null` when it has not read the served
+  body, which a `bool` decoded as `false`: "not indexed" instead of "unknown".
+
 ### Added
 
 - `LawDetail` retains `kind` and `warning`, including source completeness

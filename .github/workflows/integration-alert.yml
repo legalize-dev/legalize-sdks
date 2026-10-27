@@ -2,8 +2,13 @@ name: integration-alert
 
 # The integration workflows run on a schedule, so a failure only ever showed up
 # as a red mark nobody opens. They failed daily from 2026-08-11 to 2026-08-21
-# with a dead LEGALIZE_API_KEY and went unnoticed for three months. This turns
-# that silence into an issue.
+# with a dead LEGALIZE_API_KEY, and again from 2026-09-02 for two months, the
+# second time with an open issue nobody read.
+#
+# The whole state is one issue labelled `alerta`: opened or updated on a
+# failure, closed once every watched workflow is green again on main. It
+# notifies nobody through GitHub on purpose; the owner's morning review reads
+# the open `alerta` issues and reports them.
 
 on:
   workflow_run:
@@ -12,36 +17,80 @@ on:
 
 permissions:
   issues: write
+  actions: read
+
+# Two workflows finishing together would otherwise both find no issue and open two.
+concurrency:
+  group: integration-alert
+  cancel-in-progress: false
 
 jobs:
   alert:
-    if: github.event.workflow_run.conclusion == 'failure'
+    # A run that timed out or never started is red too: counting only
+    # `failure` let a workflow that cannot start pass in silence.
+    if: github.event.workflow_run.head_branch == 'main' && contains(fromJSON('["success", "failure", "timed_out", "startup_failure"]'), github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     steps:
-      - name: Open an issue if none is open yet
+      - name: Open, update or close the alert issue
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           WORKFLOW: ${{ github.event.workflow_run.name }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_DATE: ${{ github.event.workflow_run.created_at }}
+          WATCHED: python-integration node-integration go-integration openapi-sync
+          TITLE: CI de integración del SDK en rojo
         run: |
           set -euo pipefail
-          gh label create integration-failure --repo "$REPO" \
-            --color d73a4a --description "Live SDK tests against prod are failing" \
-            2>/dev/null || true
-          open=$(gh issue list --repo "$REPO" --state open \
-            --label integration-failure --limit 1 --json number --jq '.[0].number // empty')
-          # ponytail: one open issue is the whole signal — no daily "still broken" comments
-          if [ -n "$open" ]; then
-            echo "Issue #$open already open, saying nothing."
+          gh label create alerta --repo "$REPO" --color d73a4a \
+            --description "Algo está roto; la revisión diaria lo lee" 2>/dev/null || true
+          issue=$(gh issue list --repo "$REPO" --state open --label alerta \
+            --search "\"$TITLE\" in:title" --limit 1 --json number --jq '.[0].number // empty')
+
+          # The latest *finished* run of each watched workflow on main, this one
+          # included. An in-progress or cancelled run says nothing (the suites
+          # cancel in progress), so it must not read as green.
+          red=""
+          for w in $WATCHED; do
+            c=$(gh run list --repo "$REPO" --workflow "$w" --branch main --limit 20 \
+              --json conclusion --jq 'map(select(.conclusion == "success" or
+                .conclusion == "failure" or .conclusion == "timed_out" or
+                .conclusion == "startup_failure"))[0].conclusion // empty')
+            if [ -n "$c" ] && [ "$c" != "success" ]; then red="$red $w"; fi
+          done
+
+          if [ -z "$red" ]; then
+            if [ -n "$issue" ]; then
+              gh issue close "$issue" --repo "$REPO" --comment "En verde otra vez: $RUN_URL"
+            fi
             exit 0
           fi
-          gh issue create --repo "$REPO" --label integration-failure \
-            --title "Integration tests against prod are failing" \
-            --body "\`$WORKFLOW\` failed: $RUN_URL
 
-          The live SDK suites hit https://legalize.dev with \`LEGALIZE_API_KEY\`.
-          A 401 \`invalid_api_key\` means that secret is dead — rotate the key and
-          run \`gh secret set LEGALIZE_API_KEY --repo $REPO\`.
+          old=""
+          if [ -n "$issue" ]; then
+            old=$(gh issue view "$issue" --repo "$REPO" --json body --jq .body)
+          fi
+          first=$(printf '%s\n' "$old" | sed -nE 's/^Primer fallo: ([0-9-]+).*/\1/p' | head -1)
+          first="${first:-${RUN_DATE%%T*}}"
+          if [ "$CONCLUSION" != "success" ]; then
+            last="Última ejecución fallida: \`$WORKFLOW\` ($CONCLUSION) $RUN_URL"
+          else
+            # sed, not grep: no match is not an error under `set -e`.
+            last=$(printf '%s\n' "$old" | sed -n '/^Última ejecución fallida:/{p;q;}')
+          fi
+          body="Primer fallo: $first
+          En rojo ahora:$red
+          $last
 
-          Close this issue once the suites are green; it will reopen on the next failure."
+          Las suites vivas llaman a https://legalize.dev con \`LEGALIZE_API_KEY\`. Un 401
+          \`invalid_api_key\` es que ese secreto está muerto: rota la clave y ejecuta
+          \`gh secret set LEGALIZE_API_KEY --repo $REPO\`.
+
+          Se cierra solo cuando las cuatro ($WATCHED) vuelven a verde en main."
+
+          if [ -n "$issue" ]; then
+            gh issue edit "$issue" --repo "$REPO" --body "$body"
+          else
+            gh issue create --repo "$REPO" --label alerta --title "$TITLE" --body "$body"
+          fi

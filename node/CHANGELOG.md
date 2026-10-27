@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+### Fixed
+
+- `articles_indexed` is `boolean | null` in the generated types. The API
+  returns `null` when it has not read the served body. The types are
+  regenerated from the current API schema, which adds optional fields.
+
 ### Added
 
 - `LawDetail` retains `kind` and `warning`, including source completeness

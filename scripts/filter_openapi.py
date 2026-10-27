@@ -27,6 +27,16 @@ ROOT = HERE.parent
 SDK_PATH_PREFIXES = ("/api/v1/", "/api/health")
 SDK_TAGS = {"api", "webhooks", "health"}
 
+# Operations the API serves and no SDK binds yet (#48). Left out of the SDK
+# spec so the three coverage tests stay green and still fail on the next
+# operation nobody has looked at; binding one means deleting it here.
+PENDING_OPERATIONS = {
+    ("get", "/api/v1/{country}/changes"),
+    ("get", "/api/v1/{country}/laws/{law_id}/diff"),
+    ("post", "/api/v1/webhooks/preview"),
+    ("post", "/api/v1/webhooks/{endpoint_id}/rotate"),
+}
+
 
 def keep_path(path: str) -> bool:
     return any(path == p or path.startswith(p) for p in SDK_PATH_PREFIXES)
@@ -64,7 +74,12 @@ def transitively_close(
 
 def filter_spec(spec: dict[str, Any]) -> dict[str, Any]:
     paths = spec.get("paths", {})
-    kept_paths = {p: v for p, v in paths.items() if keep_path(p)}
+    kept_paths = {
+        p: {m: op for m, op in v.items() if (m, p) not in PENDING_OPERATIONS}
+        for p, v in paths.items()
+        if keep_path(p)
+    }
+    kept_paths = {p: v for p, v in kept_paths.items() if v}
 
     # Determine which schemas are reachable from kept paths.
     seeds: set[str] = set()

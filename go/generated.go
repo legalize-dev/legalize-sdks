@@ -119,7 +119,7 @@ type LawDetail struct {
 	PublicationDate *string        `json:"publication_date,omitempty"`
 	Jurisdiction    *string        `json:"jurisdiction,omitempty"`
 	ArticleCount    *int           `json:"article_count,omitempty"`
-	ArticlesIndexed bool           `json:"articles_indexed"`
+	ArticlesIndexed *bool          `json:"articles_indexed"`
 	TextState       string         `json:"text_state"`
 	ReformCount     *int           `json:"reform_count,omitempty"`
 	TextSuperseded  *bool          `json:"text_superseded"`
@@ -144,7 +144,7 @@ type LawMeta struct {
 	PublicationDate *string        `json:"publication_date,omitempty"`
 	Jurisdiction    *string        `json:"jurisdiction,omitempty"`
 	ArticleCount    *int           `json:"article_count,omitempty"`
-	ArticlesIndexed bool           `json:"articles_indexed"`
+	ArticlesIndexed *bool          `json:"articles_indexed"`
 	TextState       string         `json:"text_state"`
 	ReformCount     *int           `json:"reform_count,omitempty"`
 	TextSuperseded  *bool          `json:"text_superseded"`
@@ -165,7 +165,7 @@ type LawSearchResult struct {
 	PublicationDate *string `json:"publication_date,omitempty"`
 	Jurisdiction    *string `json:"jurisdiction,omitempty"`
 	ArticleCount    *int    `json:"article_count,omitempty"`
-	ArticlesIndexed bool    `json:"articles_indexed"`
+	ArticlesIndexed *bool   `json:"articles_indexed"`
 	TextState       string  `json:"text_state"`
 	ReformCount     *int    `json:"reform_count,omitempty"`
 	TextSuperseded  *bool   `json:"text_superseded"`

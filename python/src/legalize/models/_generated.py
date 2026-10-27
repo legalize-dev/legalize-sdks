@@ -3,9 +3,24 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
+
+
+class ArticleCoverage(BaseModel):
+    """
+    How much of a corpus is broken down into articles.
+
+    ``article_count: 0`` on a law is ambiguous — it can mean the law has no
+    articles, or that nobody ever broke it down — and a caller only finds out
+    the hard way, by asking for one article and getting the whole document.
+    This is the same question asked of a whole corpus, before that happens.
+    """
+
+    articles_total: int = Field(..., title="Articles Total")
+    laws_total: int = Field(..., title="Laws Total")
+    laws_with_articles: int = Field(..., title="Laws With Articles")
 
 
 class Commit(BaseModel):
@@ -85,11 +100,7 @@ class LawDetail(BaseModel):
     """
 
     article_count: int | None = Field(None, title="Article Count")
-    articles_indexed: bool = Field(
-        ...,
-        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
-        title="Articles Indexed",
-    )
+    articles_indexed: bool | None = Field(..., title="Articles Indexed")
     content_md: str | None = Field(None, title="Content Md")
     country: str = Field(..., title="Country")
     department: str | None = Field(None, title="Department")
@@ -117,9 +128,9 @@ class LawMeta(BaseModel):
     """
 
     article_count: int | None = Field(None, title="Article Count")
-    articles_indexed: bool = Field(
+    articles_indexed: bool | None = Field(
         ...,
-        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
+        description="Metadata counts do not establish an index in the currently served body.",
         title="Articles Indexed",
     )
     country: str = Field(..., title="Country")
@@ -139,21 +150,27 @@ class LawMeta(BaseModel):
     title: str = Field(..., title="Title")
 
 
+class ContentAvailability(RootModel[Literal["unchecked"]]):
+    root: Literal["unchecked"] = Field("unchecked", title="Content Availability")
+
+
 class LawSearchResult(BaseModel):
     """
     Law result with search snippet.
     """
 
     article_count: int | None = Field(None, title="Article Count")
-    articles_indexed: bool = Field(
+    articles_indexed: bool | None = Field(
         ...,
-        description='Whether *we* broke this law into articles — not whether it has any.\n\nA bare ``article_count: 0`` reads as "this law has no articles", and for\nmost of the corpora where it appears that is false: the articles are in\nthe text and we did not index them. Callers asking for an article, or\ngrepping one, need to tell "no such article" from "no index here", so the\ndistinction is stated rather than left to be inferred from a zero.',
+        description="Metadata counts do not establish an index in the currently served body.",
         title="Articles Indexed",
     )
+    content_availability: Literal["unchecked"] = Field("unchecked", title="Content Availability")
     country: str = Field(..., title="Country")
     id: str = Field(..., title="Id")
     jurisdiction: str | None = Field(None, title="Jurisdiction")
     law_type: str = Field(..., title="Law Type")
+    match_basis: Literal["identifier", "text"] | None = Field(None, title="Match Basis")
     publication_date: str | None = Field(None, title="Publication Date")
     reform_count: int | None = Field(None, title="Reform Count")
     short_title: str | None = Field(None, title="Short Title")
@@ -189,11 +206,15 @@ class PaginatedLaws(BaseModel):
 class Reform(BaseModel):
     articles_affected: str | None = Field(None, title="Articles Affected")
     date: str = Field(..., title="Date")
+    source_available: bool = Field(False, title="Source Available")
+    source_country: str | None = Field(None, title="Source Country")
     source_id: str | None = Field(None, title="Source Id")
     source_title: str | None = Field(None, title="Source Title")
 
 
 class ReformsResponse(BaseModel):
+    declared_by_source: list[dict[str, Any]] = Field([], title="Declared By Source")
+    history: dict[str, Any] | None = Field(None, title="History")
     law_id: str = Field(..., title="Law Id")
     limit: int = Field(..., title="Limit")
     offset: int = Field(..., title="Offset")
@@ -202,6 +223,7 @@ class ReformsResponse(BaseModel):
 
 
 class StatsResponse(BaseModel):
+    article_coverage: ArticleCoverage | None = None
     country: str = Field(..., title="Country")
     jurisdiction: str | None = Field(None, title="Jurisdiction")
     law_types: list[str] = Field(..., title="Law Types")
@@ -221,6 +243,8 @@ class WebhookEndpointCreate(BaseModel):
     countries: list[str] | None = Field(None, title="Countries")
     description: str = Field("", title="Description")
     event_types: list[str] = Field(..., title="Event Types")
+    law_ids: list[str] | None = Field(None, title="Law Ids")
+    match_query: str | None = Field(None, title="Match Query")
     url: str = Field(..., title="Url")
 
 
@@ -229,6 +253,8 @@ class WebhookEndpointUpdate(BaseModel):
     description: str | None = Field(None, title="Description")
     enabled: bool | None = Field(None, title="Enabled")
     event_types: list[str] | None = Field(None, title="Event Types")
+    law_ids: list[str] | None = Field(None, title="Law Ids")
+    match_query: str | None = Field(None, title="Match Query")
     url: str | None = Field(None, title="Url")
 
 
