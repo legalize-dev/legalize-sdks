@@ -19,11 +19,19 @@ permissions:
   issues: write
   actions: read
 
+# Two workflows finishing together would otherwise both find no issue and open two.
+concurrency:
+  group: integration-alert
+  cancel-in-progress: false
+
 jobs:
   alert:
+    # A run that timed out or never started is red too: counting only
+    # `failure` let a workflow that cannot start pass in silence.
     if: >-
       github.event.workflow_run.head_branch == 'main' &&
-      contains(fromJSON('["success", "failure"]'), github.event.workflow_run.conclusion)
+      contains(fromJSON('["success", "failure", "timed_out", "startup_failure"]'),
+               github.event.workflow_run.conclusion)
     runs-on: ubuntu-latest
     steps:
       - name: Open, update or close the alert issue
@@ -43,12 +51,16 @@ jobs:
           issue=$(gh issue list --repo "$REPO" --state open --label alerta \
             --search "\"$TITLE\" in:title" --limit 1 --json number --jq '.[0].number // empty')
 
-          # The latest run of each watched workflow on main, this one included.
+          # The latest *finished* run of each watched workflow on main, this one
+          # included. An in-progress or cancelled run says nothing (the suites
+          # cancel in progress), so it must not read as green.
           red=""
           for w in $WATCHED; do
-            c=$(gh run list --repo "$REPO" --workflow "$w" --branch main --limit 1 \
-              --json conclusion --jq '.[0].conclusion // empty')
-            if [ "$c" = "failure" ]; then red="$red $w"; fi
+            c=$(gh run list --repo "$REPO" --workflow "$w" --branch main --limit 20 \
+              --json conclusion --jq 'map(select(.conclusion == "success" or
+                .conclusion == "failure" or .conclusion == "timed_out" or
+                .conclusion == "startup_failure"))[0].conclusion // empty')
+            if [ -n "$c" ] && [ "$c" != "success" ]; then red="$red $w"; fi
           done
 
           if [ -z "$red" ]; then
@@ -64,10 +76,11 @@ jobs:
           fi
           first=$(printf '%s\n' "$old" | sed -nE 's/^Primer fallo: ([0-9-]+).*/\1/p' | head -1)
           first="${first:-${RUN_DATE%%T*}}"
-          if [ "$CONCLUSION" = "failure" ]; then
-            last="Última ejecución fallida: \`$WORKFLOW\` $RUN_URL"
+          if [ "$CONCLUSION" != "success" ]; then
+            last="Última ejecución fallida: \`$WORKFLOW\` ($CONCLUSION) $RUN_URL"
           else
-            last=$(printf '%s\n' "$old" | grep '^Última ejecución fallida:' | head -1)
+            # sed, not grep: no match is not an error under `set -e`.
+            last=$(printf '%s\n' "$old" | sed -n '/^Última ejecución fallida:/{p;q;}')
           fi
           body="Primer fallo: $first
           En rojo ahora:$red

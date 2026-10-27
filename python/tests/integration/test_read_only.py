@@ -100,9 +100,10 @@ class TestLawsList:
     def test_status_filter(self, client: Legalize):
         page = client.laws.list("es", status="vigente", per_page=5)
         for law in page.results:
-            # status is nullable — only check when present
+            # status is nullable — only check when present. The filter takes
+            # either spelling and the API answers with the corpus's own value.
             if law.status:
-                assert law.status == "vigente"
+                assert law.status in ("vigente", "in_force")
 
     def test_invalid_year_rejected(self, client: Legalize):
         with pytest.raises(InvalidRequestError):
