@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning][semver].
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-11-17
+
 ### Fixed
 
 - `articles_indexed` is `boolean | null` in the generated types. The API

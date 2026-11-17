@@ -1,6 +1,6 @@
 {
   "name": "@legalize-dev/sdk",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Official Node client for the Legalize API",
   "publishConfig": {
     "access": "public"
