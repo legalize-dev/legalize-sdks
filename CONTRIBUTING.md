@@ -126,8 +126,11 @@ Once set, the `PYPI_API_TOKEN` secret can be deleted.
 
 ### One-time npm setup
 
-1. Create a granular access token on npmjs.com scoped to the `legalize`
-   package with publish permission.
-2. Save it as the `NPM_TOKEN` GitHub secret.
-3. Protect the `npm` environment in GitHub repo settings with required
+Trusted Publishing (OIDC), like PyPI; no token secret:
+
+1. https://www.npmjs.com/package/@legalize-dev/sdk/access
+2. → Trusted Publisher → GitHub Actions
+3. Owner: `legalize-dev`, Repo: `legalize-sdks`,
+   Workflow: `node-publish.yml`, Environment: `npm`, allow `npm publish`.
+4. Protect the `npm` environment in GitHub repo settings with required
    reviewers if desired.
