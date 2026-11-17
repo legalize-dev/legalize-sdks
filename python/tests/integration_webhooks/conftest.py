@@ -1,8 +1,8 @@
 """Fixtures for webhook end-to-end integration tests.
 
-Uses webhook.site as a public HTTP receiver: each test gets its own
-token, creates a Legalize webhook pointing at that URL, triggers the
-server, and then reads back the delivery from webhook.site's API to
+Uses webhook.site as a public HTTP receiver: the session shares one
+token, each test creates a Legalize webhook pointing at that URL, triggers
+the server, and then reads back the delivery from webhook.site's API to
 verify the payload and signature.
 
 These tests are OPT-IN: they only run when ``LEGALIZE_API_KEY`` is
@@ -53,18 +53,20 @@ class WebhookSite:
         self._http = httpx.Client(timeout=15.0)
         self._tokens: list[str] = []
 
-    def create_token(self) -> str:
-        """Create a new token and return its ``uuid``.
+    def token(self) -> str:
+        """Return the session's token ``uuid``, creating it on first use.
 
-        The listener URL is ``{base}/{uuid}``.
+        The listener URL is ``{base}/{uuid}``. webhook.site allows one
+        anonymous token per minute per IP (429, ``Retry-After: 60``), so the
+        tests share one. Only ``test_create_ping_verify_delete`` reads
+        deliveries; the others just need a URL to register.
         """
-        # webhook.site accepts POST with an empty body to create a token.
-        resp = self._http.post(f"{self._base}/token", json={})
-        resp.raise_for_status()
-        data = resp.json()
-        token = data["uuid"]
-        self._tokens.append(token)
-        return token
+        if not self._tokens:
+            # webhook.site accepts POST with an empty body to create a token.
+            resp = self._http.post(f"{self._base}/token", json={})
+            resp.raise_for_status()
+            self._tokens.append(resp.json()["uuid"])
+        return self._tokens[0]
 
     def url_for(self, token: str) -> str:
         return f"{self._base}/{token}"
