@@ -3,13 +3,12 @@ name: node-publish
 # Publishes `@legalize-dev/sdk` to npm when a `node-vX.Y.Z` tag is
 # pushed.
 #
-# One-time npm setup (done for 0.1.0):
-#   1. Create a granular access token scoped to the `@legalize-dev`
-#      scope with "Publish" permission (npmjs.com → Access Tokens).
-#   2. Add it to the GitHub repo as the `NPM_TOKEN` secret.
-#   3. After the first publish succeeds, configure Trusted Publishing
-#      on https://www.npmjs.com/package/@legalize-dev/sdk/access and
-#      drop the token (move the workflow to OIDC-only).
+# Authentication is npm Trusted Publishing (OIDC), no token: the
+# package trusts this repo, this workflow file and the `npm`
+# environment (https://www.npmjs.com/package/@legalize-dev/sdk/access,
+# set up 2026-11-17). Renaming this file or the environment breaks
+# publishing until the trusted publisher is updated to match. The
+# NPM_TOKEN secret it replaced kept expiring (E404 on PUT).
 #
 # Published packages carry sigstore provenance statements
 # (`--provenance`), which link the tarball to this exact workflow run.
@@ -117,11 +116,11 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: npm
           cache-dependency-path: node/package-lock.json
+      # Trusted Publishing needs npm >= 11.5.1; Node 22 bundles npm 10.
+      - run: npm install -g npm@^11.5.1
       - run: npm ci
       - run: npm run build
       - name: Publish (public, with provenance)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance
 
   release:
