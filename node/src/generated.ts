@@ -244,6 +244,8 @@ export interface paths {
          *     Pro tier: adds department, source, last_updated, extra (country-specific metadata).
          *     Read `kind` and `warning` before quoting: `incomplete` identifies a source
          *     integrity warning, independently of the body's `text_state`.
+         *     A body too large to serve inline comes back with `content_md: null` and
+         *     `content_url`, the Markdown file to download instead.
          */
         get: operations["api_get_law_api_v1__country__laws__law_id__get"];
         put?: never;
@@ -580,6 +582,8 @@ export interface components {
             readonly articles_indexed: boolean | null;
             /** Content Md */
             content_md?: string | null;
+            /** Content Url */
+            content_url?: string | null;
             /** Country */
             country: string;
             /** Department */

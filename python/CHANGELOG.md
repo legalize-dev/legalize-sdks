@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `LawDetail.content_url`: a body too large to serve inline comes back with
+  `content_md` set to `None` and `content_url`, the Markdown file to download.
+
 - `LawDetail` retains `kind` and `warning`, including source completeness
   warnings on the latest response. Historical models already accept `incomplete`.
 
