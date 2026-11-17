@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- `LawDetail.ContentURL`: a body too large to serve inline comes back with a
+  nil `ContentMD` and `ContentURL`, the Markdown file to download.
+
 - `LawDetail` retains `kind` and `warning`, including source completeness
   warnings on the latest response. Historical models already accept `incomplete`.
 

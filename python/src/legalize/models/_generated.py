@@ -102,6 +102,7 @@ class LawDetail(BaseModel):
     article_count: int | None = Field(None, title="Article Count")
     articles_indexed: bool | None = Field(..., title="Articles Indexed")
     content_md: str | None = Field(None, title="Content Md")
+    content_url: str | None = Field(None, title="Content Url")
     country: str = Field(..., title="Country")
     department: str | None = Field(None, title="Department")
     extra: dict[str, Any] | None = Field(None, title="Extra")

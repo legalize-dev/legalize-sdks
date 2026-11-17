@@ -124,6 +124,7 @@ type LawDetail struct {
 	ReformCount     *int           `json:"reform_count,omitempty"`
 	TextSuperseded  *bool          `json:"text_superseded"`
 	ContentMD       *string        `json:"content_md,omitempty"`
+	ContentURL      *string        `json:"content_url,omitempty"`
 	Department      *string        `json:"department,omitempty"`
 	Source          *string        `json:"source,omitempty"`
 	LastUpdated     *string        `json:"last_updated,omitempty"`

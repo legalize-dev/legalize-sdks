@@ -430,6 +430,17 @@
             ],
             "title": "Content Md"
           },
+          "content_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Url"
+          },
           "country": {
             "title": "Country",
             "type": "string"
@@ -2377,7 +2388,7 @@
     },
     "/api/v1/{country}/laws/{law_id}": {
       "get": {
-        "description": "Get a complete law with full Markdown content.\n\nFetches content from GitHub. Slower than /meta for metadata-only use cases.\nFree tier: basic fields + content_md.\nPro tier: adds department, source, last_updated, extra (country-specific metadata).\nRead `kind` and `warning` before quoting: `incomplete` identifies a source\nintegrity warning, independently of the body's `text_state`.",
+        "description": "Get a complete law with full Markdown content.\n\nFetches content from GitHub. Slower than /meta for metadata-only use cases.\nFree tier: basic fields + content_md.\nPro tier: adds department, source, last_updated, extra (country-specific metadata).\nRead `kind` and `warning` before quoting: `incomplete` identifies a source\nintegrity warning, independently of the body's `text_state`.\nA body too large to serve inline comes back with `content_md: null` and\n`content_url`, the Markdown file to download instead.",
         "operationId": "api_get_law_api_v1__country__laws__law_id__get",
         "parameters": [
           {
